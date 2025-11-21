@@ -18,6 +18,8 @@ npm install playwright-state-model
 - `@playwright/test`: ^1.30.0
 - `xstate`: ^4.30.0 || ^5.0.0
 
+**Note**: The library automatically supports both XState v4 and v5. No code changes needed when upgrading XState versions.
+
 ## Quick Start
 
 ### 1. Define Your XState Machine
