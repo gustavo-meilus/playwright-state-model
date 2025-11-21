@@ -13,7 +13,7 @@ Model-Based Testing driver connecting XState state machines with Playwright Page
 ## Installation
 
 ```bash
-npm install playwright-xstate-driver
+npm install poc-model-state-playwright
 ```
 
 **Peer Dependencies:**
@@ -51,7 +51,7 @@ export const appMachine = createMachine({
 
 ```typescript
 import { Page, expect } from '@playwright/test';
-import { BaseState } from 'playwright-xstate-driver';
+import { BaseState } from 'poc-model-state-playwright';
 
 export class HomePage extends BaseState {
   constructor(page: Page, context?: any) {
@@ -72,7 +72,7 @@ export class HomePage extends BaseState {
 ### 3. Register States
 
 ```typescript
-import { StateFactory } from 'playwright-xstate-driver';
+import { StateFactory } from 'poc-model-state-playwright';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 
@@ -88,7 +88,7 @@ export function createStateFactory(page: Page): StateFactory {
 
 ```typescript
 import { test } from '@playwright/test';
-import { ModelExecutor } from 'playwright-xstate-driver';
+import { ModelExecutor } from 'poc-model-state-playwright';
 import { appMachine } from './machine';
 import { createStateFactory } from './factory';
 

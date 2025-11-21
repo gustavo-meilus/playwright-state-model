@@ -1,7 +1,7 @@
 {
   "name": "playwright-dev-example",
   "version": "1.0.0",
-  "description": "Example test project using playwright-xstate-driver",
+  "description": "Example test project using poc-model-state-playwright",
   "type": "module",
   "scripts": {
     "test": "playwright test",
@@ -9,7 +9,7 @@
     "test:headed": "playwright test --headed"
   },
   "dependencies": {
-    "playwright-xstate-driver": "file:.."
+    "poc-model-state-playwright": "file:.."
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",

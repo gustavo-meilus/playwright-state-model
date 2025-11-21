@@ -1,5 +1,5 @@
 {
-  "name": "playwright-xstate-driver",
+  "name": "poc-model-state-playwright",
   "version": "1.0.0",
   "description": "Model-Based Testing driver connecting XState with Playwright Page Objects",
   "main": "./dist/index.js",

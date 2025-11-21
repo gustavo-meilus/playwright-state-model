@@ -1,6 +1,6 @@
 # Playwright.dev Example - Model-Based Testing
 
-This example demonstrates how to use `playwright-xstate-driver` to test the Playwright.dev website using XState state machines and Page Object Models.
+This example demonstrates how to use `poc-model-state-playwright` to test the Playwright.dev website using XState state machines and Page Object Models.
 
 ## Structure
 

@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { BaseState } from 'playwright-xstate-driver';
+import { BaseState } from 'poc-model-state-playwright';
 
 /**
  * Page Object Model for Playwright.dev Getting Started Page.
