@@ -20,6 +20,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "format": "prettier --write \"**/*.{ts,json,md}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\" --ignore-path .prettierignore",
     "prepublishOnly": "npm run build"
   },
   "repository": {
@@ -43,6 +45,7 @@
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/node": "^20.0.0",
+    "prettier": "3.6.2",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "xstate": "^4.38.0"

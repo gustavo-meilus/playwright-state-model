@@ -1,7 +1,7 @@
 ---
 name: module-builder
 description: Use this agent when you need to plan, generate, or fix code for playwright-state-model module development, following expert-level standards and best practices
-tools: glob_file_search, grep, read_file, list_dir, search_replace, write
+tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write
 model: sonnet
 color: purple
 ---

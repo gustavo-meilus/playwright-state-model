@@ -25,4 +25,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/gustavo-meilus/playwright-state-model/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/gustavo-meilus/playwright-state-model/releases/tag/v1.0.0
-

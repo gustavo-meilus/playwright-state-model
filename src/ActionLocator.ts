@@ -1,5 +1,5 @@
-import { Locator } from '@playwright/test';
-import { ITransition } from './types';
+import { Locator } from "@playwright/test";
+import { ITransition } from "./types";
 
 /**
  * A smart locator that binds a UI element to an action, side effects, and a result state.
@@ -15,7 +15,7 @@ export class ActionLocator<TNext> {
    * Executes the interaction and handles all defined side effects efficiently.
    */
   async perform(
-    action: 'click' | 'dblclick' | 'hover' | 'fill' | 'check' | 'uncheck',
+    action: "click" | "dblclick" | "hover" | "fill" | "check" | "uncheck",
     arg1?: any,
     arg2?: any
   ): Promise<TNext> {
@@ -27,7 +27,7 @@ export class ActionLocator<TNext> {
     if (opts) {
       if (opts.waitForNavigation) {
         promises.push(
-          page.waitForURL(opts.waitForNavigation.url || '**', {
+          page.waitForURL(opts.waitForNavigation.url || "**", {
             waitUntil: opts.waitForNavigation.waitUntil,
           })
         );
@@ -39,12 +39,12 @@ export class ActionLocator<TNext> {
 
     // 2. Queue the Action
     const actionPromise = (async () => {
-      if (action === 'click') await this.locator.click(arg1);
-      else if (action === 'dblclick') await this.locator.dblclick(arg1);
-      else if (action === 'hover') await this.locator.hover(arg1);
-      else if (action === 'fill') await this.locator.fill(arg1, arg2);
-      else if (action === 'check') await this.locator.check(arg1);
-      else if (action === 'uncheck') await this.locator.uncheck(arg1);
+      if (action === "click") await this.locator.click(arg1);
+      else if (action === "dblclick") await this.locator.dblclick(arg1);
+      else if (action === "hover") await this.locator.hover(arg1);
+      else if (action === "fill") await this.locator.fill(arg1, arg2);
+      else if (action === "check") await this.locator.check(arg1);
+      else if (action === "uncheck") await this.locator.uncheck(arg1);
     })();
     promises.push(actionPromise);
 

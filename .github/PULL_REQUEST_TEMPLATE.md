@@ -17,15 +17,16 @@
 ## Related Issues
 
 <!-- Link to related issues using #issue_number -->
+
 Closes #
 
 ## Changes Made
 
 <!-- List the main changes you made -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -53,4 +54,3 @@ Closes #
 ## Additional Notes
 
 <!-- Any additional information that reviewers should know -->
-

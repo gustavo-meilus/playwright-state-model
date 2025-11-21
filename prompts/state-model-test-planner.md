@@ -1,7 +1,7 @@
 ---
 name: state-model-test-planner
 description: Use this agent when you need to create comprehensive model-based test plans using playwright-state-model, XState, and Playwright Page Objects
-tools: glob_file_search, grep, read_file, list_dir, search_replace, write
+tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write
 model: sonnet
 color: blue
 ---

@@ -175,9 +175,7 @@ const machine = createMachine({
 
 class UserDashboard extends BaseState<{ userId: string }> {
   async validateState(): Promise<void> {
-    await expect(
-      this.page.locator(`[data-user-id="${this.context.userId}"]`)
-    ).toBeVisible();
+    await expect(this.page.locator(`[data-user-id="${this.context.userId}"]`)).toBeVisible();
   }
 }
 ```
@@ -286,14 +284,12 @@ We welcome contributions! This project follows best practices for open source de
    ```
 
 2. **Make your changes** following the existing code style:
-
    - Use TypeScript with strict mode
    - Follow existing naming conventions
    - Add JSDoc comments for public APIs
    - Keep code simple and maintainable
 
 3. **Test your changes**:
-
    - Ensure the build succeeds: `npm run build`
    - Run example tests: `cd example && npm test`
    - Test your changes manually if needed
@@ -308,7 +304,6 @@ We welcome contributions! This project follows best practices for open source de
    ```
 
    Use conventional commit messages:
-
    - `feat:` for new features
    - `fix:` for bug fixes
    - `docs:` for documentation changes

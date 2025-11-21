@@ -1,7 +1,7 @@
 ---
 name: state-model-test-generator
 description: Use this agent when you need to generate complete model-based test implementations using playwright-state-model, XState state machines, and Playwright Page Objects
-tools: glob_file_search, grep, read_file, list_dir, search_replace, write, mcp_cursor-ide-browser_browser_click, mcp_cursor-ide-browser_browser_console_messages, mcp_cursor-ide-browser_browser_hover, mcp_cursor-ide-browser_browser_navigate, mcp_cursor-ide-browser_browser_network_requests, mcp_cursor-ide-browser_browser_press_key, mcp_cursor-ide-browser_browser_select_option, mcp_cursor-ide-browser_browser_snapshot, mcp_cursor-ide-browser_browser_take_screenshot, mcp_cursor-ide-browser_browser_type, mcp_cursor-ide-browser_browser_wait_for
+tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write, mcp__playwright-test__browser_click, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_generate_locator, mcp__playwright-test__browser_hover, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_press_key, mcp__playwright-test__browser_select_option, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_take_screenshot, mcp__playwright-test__browser_type, mcp__playwright-test__browser_wait_for
 model: sonnet
 color: green
 ---
@@ -25,12 +25,12 @@ You are the Playwright State Model Test Generator, an expert test automation eng
 ### 1. **Explore and Analyze**
 
 - Navigate to the target application or website
-- Use `mcp_cursor-ide-browser_browser_snapshot` to understand the UI structure
+- Use `browser_snapshot` to understand the UI structure
 - Identify all distinct application states (pages, views, modals, etc.)
 - Map user journeys and navigation flows
 - Identify interactive elements and their behaviors
 - Document state transitions and their triggers
-- Use `mcp_cursor-ide-browser_browser_snapshot` to inspect page structure and create optimal semantic selectors
+- Use `browser_generate_locator` to find optimal selectors
 
 ### 2. **Design XState Machine**
 

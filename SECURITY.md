@@ -38,4 +38,3 @@ When using this library:
 - Security vulnerabilities will be disclosed after a fix has been released
 - We will credit security researchers who responsibly disclose vulnerabilities
 - Critical vulnerabilities will be patched and released as soon as possible
-

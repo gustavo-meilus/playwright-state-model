@@ -1,9 +1,9 @@
 ---
 name: Feature Request
 about: Suggest an idea for this project
-title: '[FEATURE] '
+title: "[FEATURE] "
 labels: enhancement
-assignees: ''
+assignees: ""
 ---
 
 ## Problem Statement
@@ -25,4 +25,3 @@ Describe a specific use case or scenario where this feature would be helpful.
 ## Additional Context
 
 Add any other context, mockups, or examples about the feature request here.
-

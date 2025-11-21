@@ -1,71 +1,71 @@
-import { createMachine } from 'xstate';
+import { createMachine } from "xstate";
 
 export const playwrightDevMachine = createMachine({
-  id: 'playwrightDev',
+  id: "playwrightDev",
   predictableActionArguments: true,
-  initial: 'home',
+  initial: "home",
   context: {
-    currentPage: 'home',
+    currentPage: "home",
   },
   states: {
     home: {
-      id: 'home',
+      id: "home",
       on: {
         NAVIGATE_TO_DOCS: {
-          target: 'docs',
+          target: "docs",
         },
         NAVIGATE_TO_API: {
-          target: '#docs.api',
+          target: "#docs.api",
         },
       },
     },
     docs: {
-      id: 'docs',
-      initial: 'overview',
+      id: "docs",
+      initial: "overview",
       states: {
         overview: {
-          id: 'docs.overview',
+          id: "docs.overview",
           on: {
             NAVIGATE_TO_GETTING_STARTED: {
-              target: 'gettingStarted',
+              target: "gettingStarted",
             },
             NAVIGATE_TO_API: {
-              target: '#docs.api',
+              target: "#docs.api",
             },
             NAVIGATE_TO_HOME: {
-              target: '#home',
+              target: "#home",
             },
           },
         },
         gettingStarted: {
-          id: 'docs.gettingStarted',
+          id: "docs.gettingStarted",
           on: {
             NAVIGATE_TO_OVERVIEW: {
-              target: 'overview',
+              target: "overview",
             },
             NAVIGATE_TO_HOME: {
-              target: '#home',
+              target: "#home",
             },
           },
         },
       },
       on: {
         NAVIGATE_TO_API: {
-          target: '#docs.api',
+          target: "#docs.api",
         },
         NAVIGATE_TO_HOME: {
-          target: '#home',
+          target: "#home",
         },
       },
     },
     api: {
-      id: 'docs.api',
+      id: "docs.api",
       on: {
         NAVIGATE_TO_DOCS: {
-          target: '#docs',
+          target: "#docs",
         },
         NAVIGATE_TO_HOME: {
-          target: '#home',
+          target: "#home",
         },
       },
     },

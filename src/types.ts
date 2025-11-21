@@ -1,5 +1,5 @@
-import { Page, Request, Response } from '@playwright/test';
-import { BaseState } from './BaseState';
+import { Page, Request, Response } from "@playwright/test";
+import { BaseState } from "./BaseState";
 
 /**
  * Defines side effects to wait for during a transition.
@@ -7,7 +7,7 @@ import { BaseState } from './BaseState';
 export interface TransitionOptions {
   waitForNavigation?: {
     url?: string | RegExp;
-    waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+    waitUntil?: "load" | "domcontentloaded" | "networkidle" | "commit";
   };
   waitForRequest?: string | RegExp | ((request: Request) => boolean);
   waitForResponse?: string | RegExp | ((response: Response) => boolean);

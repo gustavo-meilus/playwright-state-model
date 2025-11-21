@@ -1,8 +1,8 @@
-import { AnyStateMachine, interpret } from 'xstate';
-import { Page } from '@playwright/test';
-import { StateFactory } from './StateFactory';
-import { BaseState } from './BaseState';
-import { resolveStatePaths } from './utils';
+import { AnyStateMachine, interpret } from "xstate";
+import { Page } from "@playwright/test";
+import { StateFactory } from "./StateFactory";
+import { BaseState } from "./BaseState";
+import { resolveStatePaths } from "./utils";
 
 export class ModelExecutor {
   private service: any;
@@ -23,7 +23,7 @@ export class ModelExecutor {
     const stateValue = this.service.state.value;
     const machineContext = this.service.state.context;
     const stateKeys = resolveStatePaths(stateValue);
-    
+
     return stateKeys.map((key) => this.factory.get(key, machineContext));
   }
 
@@ -32,7 +32,7 @@ export class ModelExecutor {
    */
   async validateCurrentState(): Promise<void> {
     const chain = this.getActiveStateChain();
-    
+
     // Validate Top-Down
     for (const stateObj of chain) {
       await stateObj.validateState();
@@ -44,20 +44,20 @@ export class ModelExecutor {
    */
   async dispatch(event: string, payload?: any): Promise<void> {
     console.log(`[Executor] Dispatching: ${event}`);
-    
+
     const chain = this.getActiveStateChain();
     let handled = false;
 
     // 1. Find Handler (Bottom-Up)
     for (let i = chain.length - 1; i >= 0; i--) {
       const stateObj = chain[i];
-      if (typeof (stateObj as any)[event] === 'function') {
+      if (typeof (stateObj as any)[event] === "function") {
         console.log(`[Executor] Handled by: ${stateObj.constructor.name}`);
-        
+
         // Execute Action
-        await (stateObj as any)[event](payload); 
+        await (stateObj as any)[event](payload);
         handled = true;
-        break; 
+        break;
       }
     }
 
@@ -68,18 +68,18 @@ export class ModelExecutor {
     // 2. Update State Machine
     const nextState = this.service.nextState(event);
     if (!nextState.changed) {
-        console.warn(`[Executor] Warning: Event '${event}' did not result in a state change.`);
+      console.warn(`[Executor] Warning: Event '${event}' did not result in a state change.`);
     }
     this.service.send(event, payload);
 
     // 3. Validate New State Hierarchy
     await this.validateCurrentState();
   }
-  
+
   /**
    * Returns the current raw XState value.
    */
   get currentStateValue() {
-      return this.service.state.value;
+    return this.service.state.value;
   }
 }

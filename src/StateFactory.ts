@@ -1,6 +1,6 @@
-import { Page } from '@playwright/test';
-import { BaseState } from './BaseState';
-import { StateConstructor } from './types';
+import { Page } from "@playwright/test";
+import { BaseState } from "./BaseState";
+import { StateConstructor } from "./types";
 
 /**
  * Manages the mapping between XState IDs and Playwright Page Objects.
@@ -8,7 +8,7 @@ import { StateConstructor } from './types';
 export class StateFactory {
   private page: Page;
   private definitions: Map<string, StateConstructor<any>> = new Map();
-  
+
   // Stores the last created instance for debugging/logging
   private lastInstance: BaseState | null = null;
 
