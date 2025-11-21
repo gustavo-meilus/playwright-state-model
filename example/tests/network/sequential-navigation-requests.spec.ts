@@ -1,7 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { ModelExecutor } from "playwright-state-model";
-import { playwrightDevMachine } from "../../src/machine";
 import { createStateFactory } from "../../src/factory";
+import { playwrightDevMachine } from "../../src/machine";
 
 // spec: example/tests/TEST_PLAN.md - Test Scenario 7
 
