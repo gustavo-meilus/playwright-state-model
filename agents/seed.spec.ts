@@ -1,7 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { ModelExecutor } from "playwright-state-model";
-import { appMachine } from "../src/machine";
 import { createStateFactory } from "../src/factory";
+import { appMachine } from "../src/machine";
 
 /**
  * Seed test that sets up the environment necessary to interact with the application.
