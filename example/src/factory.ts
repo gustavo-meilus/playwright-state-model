@@ -1,9 +1,9 @@
 import { Page } from "@playwright/test";
 import { StateFactory } from "playwright-state-model";
-import { HomePage } from "./pages/HomePage";
+import { ApiPage } from "./pages/ApiPage";
 import { DocsOverviewPage } from "./pages/DocsPage";
 import { GettingStartedPage } from "./pages/GettingStartedPage";
-import { ApiPage } from "./pages/ApiPage";
+import { HomePage } from "./pages/HomePage";
 
 /**
  * Configures the StateFactory with all Page Object mappings.

@@ -2,9 +2,9 @@ import { Page } from "@playwright/test";
 import { AnyStateMachine, interpret } from "xstate";
 import { BaseState } from "./BaseState";
 import { StateFactory } from "./StateFactory";
-import { resolveStatePaths } from "./utils";
-import { ModelExecutorOptions, RetryOptions } from "./types";
 import { StateValidationError } from "./StateValidationError";
+import { ModelExecutorOptions, RetryOptions } from "./types";
+import { resolveStatePaths } from "./utils";
 
 /**
  * Safely gets createActor from xstate module.
