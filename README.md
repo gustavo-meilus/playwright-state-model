@@ -252,7 +252,7 @@ We welcome contributions! This project follows best practices for open source de
 1. **Fork and clone** the repository:
 
    ```bash
-   git clone https://github.com/your-username/playwright-state-model.git
+   git clone https://github.com/gustavo-meilus/playwright-state-model.git
    cd playwright-state-model
    ```
 
