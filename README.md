@@ -186,6 +186,17 @@ class UserDashboard extends BaseState<{ userId: string }> {
 
 See the [`example/`](./example/) directory for a complete working example testing [playwright.dev](https://playwright.dev).
 
+## AI Agents
+
+**playwright-state-model** includes AI agents to help you build, maintain, and debug model-based tests:
+
+- **🎯 Planner** - Creates comprehensive test plans using XState and Page Objects
+- **⚡ Generator** - Generates complete test implementations from plans
+- **🔧 Healer** - Automatically fixes failing tests
+- **🏗️ Module Builder** - Helps develop and maintain the module itself
+
+See the [`agents/`](./agents/) directory for agent definitions and documentation.
+
 ## API Reference
 
 ### `BaseState<TContext>`
@@ -339,6 +350,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 - [Playwright Documentation](https://playwright.dev)
 - [XState Documentation](https://xstate.js.org)
 - [Example Project](./example/)
+- [AI Agents](./agents/)
 - [API Reference](#api-reference)
 
 ## License
