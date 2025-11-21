@@ -105,6 +105,10 @@ test("navigate through states", async ({ page }) => {
 });
 ```
 
+## XState Version Support
+
+**Full XState v4 and v5 Compatibility**: The library automatically detects and supports both XState v4 (`interpret`) and v5 (`createActor`) APIs. No code changes needed when upgrading XState versions - the library handles version detection automatically.
+
 ## Capabilities
 
 ### Hierarchical State Resolution • Automatic Composition

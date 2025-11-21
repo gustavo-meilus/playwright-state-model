@@ -4,7 +4,11 @@ import { StateValue } from "xstate";
  * Flattens an XState value into an ordered array of keys (Root -> Leaf).
  * Example: { settings: 'profile' } -> ['settings', 'settings.profile']
  */
-export function resolveStatePaths(value: StateValue): string[] {
+export function resolveStatePaths(value: StateValue | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  
   if (typeof value === "string") {
     return [value];
   }

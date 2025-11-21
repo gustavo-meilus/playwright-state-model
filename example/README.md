@@ -2,6 +2,8 @@
 
 This example demonstrates how to use `playwright-state-model` to test the Playwright.dev website using XState state machines and Page Object Models.
 
+**Note**: This example uses XState v5.24.0. The `playwright-state-model` library automatically supports both XState v4 and v5.
+
 ## Structure
 
 ```
@@ -37,7 +39,10 @@ example/
 ## Running Tests
 
 ```bash
-# Run tests
+# Install dependencies
+npm install
+
+# Run all tests
 npm test
 
 # Run tests in UI mode
@@ -49,6 +54,13 @@ npm run test:headed
 # Run tests with parallelism verification (stability check)
 npx playwright test --repeat-each 10 --workers 5
 ```
+
+## Dependencies
+
+- `playwright-state-model`: Latest version (file link to parent directory)
+- `@playwright/test`: ^1.40.0
+- `xstate`: ^5.24.0 (XState v5)
+- `typescript`: ^5.0.0
 
 ## Code Quality Features
 

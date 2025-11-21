@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2024-11-21
+
+### Fixed
+
+- Improved XState v5 compatibility - fixed invalid event handling
+- Fixed state value resolution for undefined values
+- Updated dependencies to latest versions (XState v5.24.0, @types/node v24.10.1)
+
+### Changed
+
+- Enhanced error messages for better debugging
+- Improved invalid event handling (XState silently ignores invalid transitions)
+
+## [1.1.0] - 2024-11-21
+
+### Added
+
+- **XState v5 Support**: Automatic detection and support for both XState v4 and v5 APIs
+- Dual API compatibility - uses `createActor()` for v5, falls back to `interpret()` for v4
+- Runtime version detection - no code changes needed when upgrading XState
+
+### Changed
+
+- Updated devDependencies to use XState v5.24.0 for testing
+- ModelExecutor now handles both XState v4 service and v5 actor APIs
+- Improved error handling for initialization failures
+
 ## [1.0.0] - 2024-11-21
 
 ### Added

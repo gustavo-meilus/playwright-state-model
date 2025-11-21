@@ -90,6 +90,9 @@ Apply SOLID principles: Single Responsibility, Open/Closed, Liskov Substitution,
 - Declare peer dependencies in package.json
 - Use version ranges (e.g., `^1.30.0`)
 - Document minimum required versions in README
+- **XState Support**: Support both v4 and v5 with automatic version detection
+- Use `createActor()` for v5, fallback to `interpret()` for v4
+- Handle both APIs gracefully in ModelExecutor
 
 ## TypeScript Best Practices
 
@@ -162,14 +165,14 @@ Apply SOLID principles: Single Responsibility, Open/Closed, Liskov Substitution,
 
 #### State Machine Executors
 
-- Each `ModelExecutor` instance MUST have its own XState interpreter
+- Each `ModelExecutor` instance MUST have its own XState interpreter/actor (supports both v4 and v5)
 - Serialize concurrent `dispatch()` operations using a promise queue
 - Prevent race conditions when multiple dispatches occur simultaneously
 - Ensure state transitions are atomic and consistent
 
 #### Resource Cleanup
 
-- Provide `dispose()` methods for classes that manage resources (e.g., XState interpreters)
+- Provide `dispose()` methods for classes that manage resources (e.g., XState interpreters/actors)
 - Check disposed state before operations and throw descriptive errors
 - Prevent use-after-disposal bugs
 - Clean up in `test.afterEach()` when appropriate
@@ -277,7 +280,7 @@ You MUST NOT use any other inline comments (`//` or `/* */`) for explanation in 
 - Clean up resources properly
 - Avoid memory leaks in long-running tests
 - Dispose of services and interpreters when done
-- Implement `dispose()` methods for classes managing resources (XState interpreters, event listeners, etc.)
+- Implement `dispose()` methods for classes managing resources (XState interpreters/actors, event listeners, etc.)
 - Ensure proper cleanup in multi-worker scenarios to prevent resource exhaustion
 
 ## Project Structure

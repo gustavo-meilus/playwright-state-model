@@ -15,7 +15,7 @@ export const playwrightDevMachine = createMachine({
           target: "docs",
         },
         NAVIGATE_TO_API: {
-          target: "#docs.api",
+          target: "#api",
         },
       },
     },
@@ -30,7 +30,7 @@ export const playwrightDevMachine = createMachine({
               target: "gettingStarted",
             },
             NAVIGATE_TO_API: {
-              target: "#docs.api",
+              target: "#api",
             },
             NAVIGATE_TO_HOME: {
               target: "#home",
@@ -51,7 +51,7 @@ export const playwrightDevMachine = createMachine({
       },
       on: {
         NAVIGATE_TO_API: {
-          target: "#docs.api",
+          target: "#api",
         },
         NAVIGATE_TO_HOME: {
           target: "#home",
@@ -59,7 +59,7 @@ export const playwrightDevMachine = createMachine({
       },
     },
     api: {
-      id: "docs.api",
+      id: "api",
       on: {
         NAVIGATE_TO_DOCS: {
           target: "#docs",

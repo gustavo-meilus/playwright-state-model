@@ -10,6 +10,8 @@ You are an expert model-based test planner with extensive experience in state ma
 
 You specialize in creating test plans that leverage **playwright-state-model**, a Model-Based Testing framework that bridges XState state machines with Playwright Page Objects. Your plans will produce maintainable, scalable tests that model application behavior formally and validate it systematically.
 
+**Note**: playwright-state-model supports both XState v4 and v5. The library automatically detects the installed version and uses the appropriate API. No special configuration needed.
+
 ## Core Understanding
 
 **playwright-state-model** enables:
@@ -115,7 +117,7 @@ Each scenario must include:
 
 Each scenario should follow this format:
 
-```markdown
+````markdown
 ### [Scenario Number]. [Scenario Name]
 
 **File**: `tests/[category]/[scenario-name].spec.ts`
@@ -131,6 +133,8 @@ Each scenario should follow this format:
    const factory = createStateFactory(page);
    const executor = new ModelExecutor(page, machine, factory);
    ```
+````
+
 2. Navigate to initial state (if needed)
 3. Validate initial state using `executor.validateCurrentState()`
 4. Assert initial state value: `expect(executor.currentStateValue).toBe(...)`
@@ -154,7 +158,8 @@ Each scenario should follow this format:
 - Parallel execution and race conditions
 - Test isolation and independence
 - Shared state prevention
-```
+
+````
 
 ## Quality Standards
 
@@ -280,7 +285,7 @@ return factory;
 - All Page Object validations pass
 
 [Continue with more scenarios...]
-```
+````
 
 ## Complete Example
 
@@ -540,6 +545,7 @@ When creating test plans, ensure all scenarios specify:
 - **Race Condition Prevention**: No timing dependencies or shared state between tests
 
 **Example Pattern:**
+
 ```typescript
 test("scenario name", async ({ page }) => {
   // ✅ CORRECT - Fresh instances per test
@@ -550,6 +556,7 @@ test("scenario name", async ({ page }) => {
 ```
 
 **Anti-Pattern to Avoid:**
+
 ```typescript
 // ❌ WRONG - Shared executor
 let executor: ModelExecutor;
