@@ -12,7 +12,7 @@
     "LICENSE"
   ],
   "bin": {
-    "playwright-state-model": "./dist/cli/init-agents.js"
+    "playwright-state-model": "dist/cli/init-agents.js"
   },
   "exports": {
     ".": {
@@ -28,9 +28,11 @@
     "format:check": "prettier --check \"**/*.{ts,json,md}\" --ignore-path .prettierignore",
     "prepublishOnly": "npm run build"
   },
+  "author": "gustavo-meilus",
+  "homepage": "https://github.com/gustavo-meilus/playwright-state-model#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gustavo-meilus/playwright-state-model.git"
+    "url": "git+https://github.com/gustavo-meilus/playwright-state-model.git"
   },
   "keywords": [
     "playwright",
