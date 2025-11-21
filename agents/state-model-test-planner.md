@@ -25,6 +25,7 @@ You specialize in creating test plans that leverage **playwright-state-model**, 
 ### 1. **Explore and Analyze**
 
 - Read and understand the target application or website
+- If a seed test is provided (e.g., `tests/seed.spec.ts`), use it as a reference for the testing pattern and environment setup
 - Identify all distinct application states (pages, views, modals, etc.)
 - Map user journeys and navigation flows
 - Identify interactive elements and their behaviors

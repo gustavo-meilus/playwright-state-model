@@ -7,9 +7,13 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "agents",
     "README.md",
     "LICENSE"
   ],
+  "bin": {
+    "playwright-state-model": "./dist/cli/init-agents.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

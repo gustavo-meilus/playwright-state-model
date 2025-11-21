@@ -193,6 +193,23 @@ See the [`example/`](./example/) directory for a complete working example testin
 - **🔧 Healer** - Automatically fixes failing tests
 - **🏗️ Module Builder** - Helps develop and maintain the module itself
 
+### Getting Started with Agents
+
+Initialize agent definitions in your project:
+
+```bash
+# For VS Code
+npx playwright-state-model init-agents --loop=vscode
+
+# For Claude Desktop
+npx playwright-state-model init-agents --loop=claude
+
+# For OpenCode
+npx playwright-state-model init-agents --loop=opencode
+```
+
+This creates agent definitions in `.vscode/agents/`, `.claude/agents/`, or `.opencode/agents/` depending on your chosen environment.
+
 See the [`agents/`](./agents/) directory for agent definitions and documentation.
 
 ## API Reference
