@@ -1,9 +1,35 @@
 import { Page } from "@playwright/test";
-import type * as XState from "xstate";
 import { AnyStateMachine, interpret } from "xstate";
 import { BaseState } from "./BaseState";
 import { StateFactory } from "./StateFactory";
 import { resolveStatePaths } from "./utils";
+
+/**
+ * Safely gets createActor from xstate module.
+ * Works in both CJS and ESM contexts, including Playwright test environments.
+ * Since both XState v4 and v5 export interpret(), we can always fall back to that.
+ */
+function getCreateActor(): any {
+  try {
+    // Try require first (CJS environments)
+    if (typeof require !== "undefined" && typeof require.resolve === "function") {
+      try {
+        const xstateModule = require("xstate");
+        if (xstateModule && typeof xstateModule.createActor === "function") {
+          return xstateModule.createActor;
+        }
+      } catch (requireError) {
+        // require failed, continue to other methods
+      }
+    }
+  } catch {
+    // require check failed
+  }
+  
+  // If require didn't work, we'll fall back to interpret() which is always available
+  // This ensures compatibility even in strict ESM environments
+  return undefined;
+}
 
 /**
  * Thread-safe executor for XState machines with Playwright Page Objects.
@@ -22,65 +48,56 @@ export class ModelExecutor {
     private machine: AnyStateMachine,
     private factory: StateFactory
   ) {
-    // Detect XState version and use appropriate API
-    // XState v5 uses createActor, v4 uses interpret
-    // Try to get createActor dynamically (XState v5)
-    let createActorFn: any;
-    try {
-      const xstateModule = require("xstate");
-      createActorFn = xstateModule.createActor;
-    } catch {
-      createActorFn = undefined;
-    }
+    // Initialize XState - use createActor if available (v5), otherwise use interpret
+    // Both XState v4 and v5 export interpret(), so we can always use it as fallback
+    // In v5, interpret() returns an actor; in v4, it returns a service
     
-    // Prefer createActor if available (XState v5), fallback to interpret
+    // Try to get createActor (XState v5)
+    const createActorFn = getCreateActor();
+    
+    // Try createActor first if available (XState v5)
     if (typeof createActorFn === "function") {
       try {
         this.actor = createActorFn(machine);
         this.actor.start();
         this.isXStateV5 = true;
+        return;
       } catch (error) {
-        // createActor failed, try interpret
-        // In XState v5, interpret also returns an actor, so check for that
-        try {
-          const interpreted = interpret(machine).start();
-          // Check if interpret returned an actor (v5) or service (v4)
-          if (typeof interpreted.getSnapshot === "function") {
-            // XState v5: interpret returns an actor
-            this.actor = interpreted;
-            this.isXStateV5 = true;
-          } else {
-            // XState v4: interpret returns a service
-            this.service = interpreted;
-            this.isXStateV5 = false;
-          }
-        } catch (interpretError) {
-          throw new Error(
-            `Failed to initialize XState. createActor error: ${error instanceof Error ? error.message : String(error)}. ` +
-            `interpret error: ${interpretError instanceof Error ? interpretError.message : String(interpretError)}`
-          );
-        }
+        // createActor failed, fall through to interpret
       }
-    } else {
-      // createActor not available, use interpret (XState v4)
-      try {
-        const interpreted = interpret(machine).start();
-        // Check if interpret returned an actor (v5) or service (v4)
-        if (typeof interpreted.getSnapshot === "function") {
-          // XState v5: interpret returns an actor
-          this.actor = interpreted;
-          this.isXStateV5 = true;
-        } else {
-          // XState v4: interpret returns a service
-          this.service = interpreted;
-          this.isXStateV5 = false;
-        }
-      } catch (error) {
+    }
+    
+    // Use interpret (works for both v4 and v5)
+    // This is the most reliable method as both versions export it
+    try {
+      const interpreted = interpret(machine).start();
+      
+      // Check if interpret returned an actor (v5) or service (v4)
+      // XState v5 actors have getSnapshot(), v4 services have .state property
+      // Use type assertion to check properties safely
+      const interpretedAny = interpreted as any;
+      
+      if (typeof interpretedAny.getSnapshot === "function") {
+        // XState v5: interpret returns an actor with getSnapshot()
+        this.actor = interpretedAny;
+        this.isXStateV5 = true;
+      } else if (interpretedAny.state && typeof interpretedAny.state.value !== "undefined") {
+        // XState v4: interpret returns a service with .state.value property
+        this.service = interpretedAny;
+        this.isXStateV5 = false;
+      } else {
+        // Unexpected result - throw error
         throw new Error(
-          `Failed to initialize XState with interpret: ${error instanceof Error ? error.message : String(error)}. ` +
-          `Ensure XState is properly installed (npm install xstate).`
+          "XState interpret() returned an unexpected result. " +
+          "Expected actor (v5) with getSnapshot() or service (v4) with .state. " +
+          "Ensure XState is properly installed (npm install xstate)."
         );
       }
+    } catch (error) {
+      throw new Error(
+        `Failed to initialize XState: ${error instanceof Error ? error.message : String(error)}. ` +
+        `Ensure XState is properly installed (npm install xstate@^4.30.0 || ^5.0.0).`
+      );
     }
   }
 
