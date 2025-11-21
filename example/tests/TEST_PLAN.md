@@ -233,6 +233,18 @@ export function createStateFactory(page: Page): StateFactory {
 
 ## Test Scenarios
 
+**IMPORTANT - Parallelism Safety**: All test scenarios below must follow these requirements:
+
+- **Create fresh factory and executor per test**: Each test must create its own instances
+  ```typescript
+  const factory = createStateFactory(page);
+  const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+  ```
+- **Never share executors or factories**: Each test is completely isolated
+- **Use constants when available**: Prefer `BASE_URL`, `EVENTS.*`, `STATE_VALUES.*` from `src/constants.ts`
+- **Use test helpers**: Leverage `tests/helpers/test-setup.ts` for common patterns
+- **Verify parallelism**: Run with `--repeat-each 10 --workers 5` to ensure stability
+
 ### 1. Complete Navigation Flow Through All States
 
 **File**: `tests/navigation/complete-flow.spec.ts`
@@ -243,12 +255,16 @@ export function createStateFactory(page: Page): StateFactory {
 
 **Steps:**
 
-1. Create ModelExecutor with playwrightDevMachine and factory
-2. Navigate to `https://playwright.dev`
+1. **Create fresh factory and executor** (CRITICAL for parallelism safety)
+   ```typescript
+   const factory = createStateFactory(page);
+   const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+   ```
+2. Navigate to `https://playwright.dev` (or use `BASE_URL` constant)
 3. Validate initial state: `await executor.validateCurrentState()`
-4. Assert initial state: `expect(executor.currentStateValue).toBe("home")`
-5. Dispatch navigation to docs: `await executor.dispatch("NAVIGATE_TO_DOCS")`
-6. Assert hierarchical state: `expect(executor.currentStateValue).toEqual({ docs: "overview" })`
+4. Assert initial state: `expect(executor.currentStateValue).toBe("home")` (or use `STATE_VALUES.HOME`)
+5. Dispatch navigation to docs: `await executor.dispatch("NAVIGATE_TO_DOCS")` (or use `EVENTS.NAVIGATE_TO_DOCS`)
+6. Assert hierarchical state: `expect(executor.currentStateValue).toEqual({ docs: "overview" })` (or use `STATE_VALUES.DOCS_OVERVIEW`)
 7. Validate docs overview state: `await executor.validateCurrentState()`
 8. Dispatch navigation to getting started: `await executor.dispatch("NAVIGATE_TO_GETTING_STARTED")`
 9. Assert nested state: `expect(executor.currentStateValue).toEqual({ docs: "gettingStarted" })`
@@ -261,6 +277,8 @@ export function createStateFactory(page: Page): StateFactory {
 16. Dispatch navigation to home: `await executor.dispatch("NAVIGATE_TO_HOME")`
 17. Assert final state: `expect(executor.currentStateValue).toBe("home")`
 18. Validate home state: `await executor.validateCurrentState()`
+
+**Note**: Each test must create its own executor and factory instances. Never share executors or factories between tests.
 
 **Expected Results:**
 
@@ -288,12 +306,16 @@ export function createStateFactory(page: Page): StateFactory {
 
 **Steps:**
 
-1. Create ModelExecutor with playwrightDevMachine and factory
-2. Navigate to `https://playwright.dev`
+1. **Create fresh factory and executor** (CRITICAL for parallelism safety)
+   ```typescript
+   const factory = createStateFactory(page);
+   const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+   ```
+2. Navigate to `https://playwright.dev` (or use `BASE_URL` constant)
 3. Validate initial state: `await executor.validateCurrentState()`
-4. Assert initial state: `expect(executor.currentStateValue).toBe("home")`
-5. Dispatch direct navigation to API: `await executor.dispatch("NAVIGATE_TO_API")`
-6. Assert API state: `expect(executor.currentStateValue).toBe("api")`
+4. Assert initial state: `expect(executor.currentStateValue).toBe("home")` (or use `STATE_VALUES.HOME`)
+5. Dispatch direct navigation to API: `await executor.dispatch("NAVIGATE_TO_API")` (or use `EVENTS.NAVIGATE_TO_API`)
+6. Assert API state: `expect(executor.currentStateValue).toBe("api")` (or use `STATE_VALUES.API`)
 7. Validate API state: `await executor.validateCurrentState()`
 
 **Expected Results:**
@@ -986,11 +1008,18 @@ export function createStateFactory(page: Page): StateFactory {
 All network request tests should follow this pattern:
 
 ```typescript
+import { test, expect } from "@playwright/test";
+import { ModelExecutor } from "playwright-state-model";
+import { playwrightDevMachine } from "../../src/machine";
+import { createStateFactory } from "../../src/factory";
+import { BASE_URL, EVENTS, STATE_VALUES } from "../../src/constants";
+
 test("navigation triggers network request", async ({ page }) => {
+  // CRITICAL: Create fresh instances per test for parallelism safety
   const factory = createStateFactory(page);
   const executor = new ModelExecutor(page, playwrightDevMachine, factory);
 
-  await page.goto("https://playwright.dev");
+  await page.goto(BASE_URL);
   await executor.validateCurrentState();
 
   // Set up network listeners BEFORE dispatching event
@@ -1002,10 +1031,29 @@ test("navigation triggers network request", async ({ page }) => {
   );
 
   // Dispatch event and wait for network requests
-  await Promise.all([executor.dispatch("NAVIGATE_TO_DOCS"), requestPromise, responsePromise]);
+  await Promise.all([executor.dispatch(EVENTS.NAVIGATE_TO_DOCS), requestPromise, responsePromise]);
 
-  // Verify state transition
-  expect(executor.currentStateValue).toEqual({ docs: "overview" });
+  // Verify state transition using constants
+  expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
+  await executor.validateCurrentState();
+});
+```
+
+### Test Helper Pattern
+
+For common setup patterns, use test helpers while maintaining isolation:
+
+```typescript
+import { test } from "@playwright/test";
+import { initializeTestFromHome, expect } from "./helpers/test-setup";
+import { EVENTS, STATE_VALUES } from "../src/constants";
+
+test("navigation test", async ({ page }) => {
+  // Helper creates fresh executor per test - safe for parallelism
+  const executor = await initializeTestFromHome(page);
+
+  await executor.dispatch(EVENTS.NAVIGATE_TO_DOCS);
+  expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
   await executor.validateCurrentState();
 });
 ```
@@ -1030,6 +1078,12 @@ Tests should be organized into logical categories:
 5. **Keep tests independent**: Each test should be runnable in isolation
 6. **Use descriptive test names**: Clearly indicate what is being tested
 7. **Include edge case considerations**: Document potential issues
+8. **CRITICAL - Parallelism Safety**: Always create fresh `factory` and `executor` instances per test (never share between tests)
+9. **Use Constants**: Import constants from `src/constants.ts` instead of magic strings (URLs, state values, events)
+10. **Use Test Helpers**: Leverage `tests/helpers/test-setup.ts` for common setup patterns while maintaining isolation
+11. **Verify Parallelism**: Run tests with `--repeat-each 10 --workers 5` to ensure stability
+12. **No Shared State**: Never share executors, factories, or state between tests
+13. **Auto-Waiting**: Use Playwright's built-in auto-waiting instead of `waitForTimeout()`
 
 ## Success Criteria
 
@@ -1038,7 +1092,72 @@ Tests should be organized into logical categories:
 - ✅ Event bubbling is verified for all applicable scenarios
 - ✅ Edge cases are handled gracefully
 - ✅ Tests are independent and can run in any order
+- ✅ **Tests are parallelism-safe** - pass with `--repeat-each 10 --workers 5`
+- ✅ **No shared state** - each test creates its own executor and factory
+- ✅ **Constants used** - magic strings replaced with constants from `src/constants.ts`
+- ✅ **Test helpers used** - common patterns use helpers from `tests/helpers/test-setup.ts`
 - ✅ Test execution time remains reasonable
 - ✅ All tests pass consistently
 - ✅ Code follows TypeScript best practices
 - ✅ Tests are maintainable and well-documented
+
+## Parallelism Safety Requirements
+
+All tests must follow these requirements:
+
+### Test Isolation
+
+- **Fresh Instances**: Each test creates its own `ModelExecutor` and factory instances
+- **No Shared State**: Never share executors, factories, or state between tests
+- **Page Isolation**: Each test uses its own `page` fixture
+
+### Verification
+
+Run the following command to verify parallelism safety:
+
+```bash
+npx playwright test --repeat-each 10 --workers 5
+```
+
+All tests should pass consistently across multiple parallel executions.
+
+### Anti-Patterns to Avoid
+
+**❌ WRONG - Shared Executor:**
+
+```typescript
+let executor: ModelExecutor; // Shared!
+test.beforeAll(async ({ page }) => {
+  executor = new ModelExecutor(page, machine, factory);
+});
+```
+
+**✅ CORRECT - Isolated Executor:**
+
+```typescript
+test("test", async ({ page }) => {
+  const factory = createStateFactory(page);
+  const executor = new ModelExecutor(page, machine, factory);
+  // ... test code
+});
+```
+
+### Using Constants and Helpers
+
+**Prefer constants:**
+
+```typescript
+import { BASE_URL, EVENTS, STATE_VALUES } from "../src/constants";
+
+await page.goto(BASE_URL);
+await executor.dispatch(EVENTS.NAVIGATE_TO_DOCS);
+expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
+```
+
+**Prefer helpers:**
+
+```typescript
+import { initializeTestFromHome, expect } from "./helpers/test-setup";
+
+const executor = await initializeTestFromHome(page);
+```
