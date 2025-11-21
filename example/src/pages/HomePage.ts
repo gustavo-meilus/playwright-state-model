@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { BaseState } from 'poc-model-state-playwright';
+import { BaseState } from 'playwright-state-model';
 
 /**
  * Page Object Model for Playwright.dev Homepage.

@@ -1,12 +1,14 @@
 {
-  "name": "poc-model-state-playwright",
+  "name": "playwright-state-model",
   "version": "1.0.0",
   "description": "Model-Based Testing driver connecting XState with Playwright Page Objects",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -20,6 +22,20 @@
     "dev": "tsup --watch",
     "prepublishOnly": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/playwright-state-model.git"
+  },
+  "keywords": [
+    "playwright",
+    "xstate",
+    "state-machine",
+    "model-based-testing",
+    "page-object-model",
+    "test-automation",
+    "e2e-testing"
+  ],
+  "license": "MIT",
   "peerDependencies": {
     "@playwright/test": "^1.30.0",
     "xstate": "^4.30.0 || ^5.0.0"

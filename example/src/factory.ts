@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { StateFactory } from 'poc-model-state-playwright';
+import { StateFactory } from 'playwright-state-model';
 import { HomePage } from './pages/HomePage';
 import { DocsOverviewPage } from './pages/DocsPage';
 import { GettingStartedPage } from './pages/GettingStartedPage';

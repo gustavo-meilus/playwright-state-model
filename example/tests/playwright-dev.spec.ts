@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ModelExecutor } from 'poc-model-state-playwright';
+import { ModelExecutor } from 'playwright-state-model';
 import { playwrightDevMachine } from '../src/machine';
 import { createStateFactory } from '../src/factory';
 
