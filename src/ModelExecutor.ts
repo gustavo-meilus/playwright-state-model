@@ -3,6 +3,8 @@ import { AnyStateMachine, interpret } from "xstate";
 import { BaseState } from "./BaseState";
 import { StateFactory } from "./StateFactory";
 import { resolveStatePaths } from "./utils";
+import { ModelExecutorOptions, RetryOptions } from "./types";
+import { StateValidationError } from "./StateValidationError";
 
 /**
  * Safely gets createActor from xstate module.
@@ -42,12 +44,15 @@ export class ModelExecutor {
   private isXStateV5: boolean = false;
   private dispatchQueue: Promise<void> = Promise.resolve();
   private disposed: boolean = false;
+  private options: ModelExecutorOptions;
 
   constructor(
     private page: Page,
     private machine: AnyStateMachine,
-    private factory: StateFactory
+    private factory: StateFactory,
+    options?: ModelExecutorOptions
   ) {
+    this.options = options || {};
     // Initialize XState - use createActor if available (v5), otherwise use interpret
     // Both XState v4 and v5 export interpret(), so we can always use it as fallback
     // In v5, interpret() returns an actor; in v4, it returns a service
@@ -110,7 +115,7 @@ export class ModelExecutor {
       throw new Error("ModelExecutor has been disposed and cannot be used");
     }
     
-    let stateValue: any;
+    const stateValue = this.getRawStateValue();
     let machineContext: any;
     
     if (this.isXStateV5 && this.actor) {
@@ -119,14 +124,12 @@ export class ModelExecutor {
       if (!snapshot) {
         throw new Error("Actor snapshot is not available");
       }
-      stateValue = snapshot.value ?? null;
       machineContext = snapshot.context ?? {};
     } else {
       // XState v4 API
       if (!this.service || !this.service.state) {
         throw new Error("XState service is not initialized. Ensure XState is properly installed.");
       }
-      stateValue = this.service.state.value;
       machineContext = this.service.state.context;
     }
     
@@ -143,28 +146,37 @@ export class ModelExecutor {
       throw new Error("ModelExecutor has been disposed and cannot be used");
     }
     const chain = this.getActiveStateChain();
-    const stateValue = this.currentStateValue;
+    const rawStateValue = this.getRawStateValue();
+    const statePaths = resolveStatePaths(rawStateValue);
 
     if (chain.length === 0) {
-      throw new Error(
-        `[ModelExecutor] No Page Objects found for state: ${JSON.stringify(stateValue)}. ` +
-        `Ensure all states are registered in StateFactory.`
-      );
+      throw new StateValidationError({
+        expectedState: statePaths[statePaths.length - 1] || String(rawStateValue),
+        currentState: this.currentStateString,
+        currentUrl: this.page.url(),
+        validationChain: [],
+        originalError: new Error(
+          `No Page Objects found for state: ${JSON.stringify(rawStateValue)}. ` +
+          `Ensure all states are registered in StateFactory.`
+        ),
+      });
     }
 
     for (let i = 0; i < chain.length; i++) {
       const stateObj = chain[i];
-      const stateId = resolveStatePaths(stateValue)[i];
+      const stateId = statePaths[i];
       
       try {
         await stateObj.validateState();
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(
-          `[ModelExecutor] State validation failed for '${stateId}': ${errorMessage}. ` +
-          `Current state value: ${JSON.stringify(stateValue)}. ` +
-          `Validation chain: ${chain.map((_, idx) => resolveStatePaths(stateValue)[idx]).join(" → ")}`
-        );
+        const originalError = error instanceof Error ? error : new Error(String(error));
+        throw new StateValidationError({
+          expectedState: stateId,
+          currentState: this.currentStateString,
+          currentUrl: this.page.url(),
+          validationChain: statePaths.slice(0, i + 1),
+          originalError,
+        });
       }
     }
   }
@@ -197,6 +209,14 @@ export class ModelExecutor {
         
         // Find handler in Page Object chain
         const chain = this.getActiveStateChain();
+        
+        // Set payload in all states in chain before handler execution
+        for (const state of chain) {
+          if ('setEventPayload' in state) {
+            (state as any).setEventPayload(payload);
+          }
+        }
+        
         let handled = false;
 
         for (let i = chain.length - 1; i >= 0; i--) {
@@ -243,6 +263,14 @@ export class ModelExecutor {
         }
 
         const chain = this.getActiveStateChain();
+        
+        // Set payload in all states in chain before handler execution
+        for (const state of chain) {
+          if ('setEventPayload' in state) {
+            (state as any).setEventPayload(payload);
+          }
+        }
+        
         let handled = false;
 
         for (let i = chain.length - 1; i >= 0; i--) {
@@ -282,18 +310,53 @@ export class ModelExecutor {
 
   /**
    * Returns the current raw XState value.
+   * Format depends on options.stateValueFormat setting.
    */
   get currentStateValue() {
     if (this.disposed) {
       throw new Error("ModelExecutor has been disposed and cannot be used");
     }
     
+    let value: any;
+    
     if (this.isXStateV5 && this.actor) {
       // XState v5 API
       const snapshot = this.actor.getSnapshot();
-      return snapshot?.value || null;
+      value = snapshot?.value || null;
     } else {
       // XState v4 API
+      if (!this.service || !this.service.state) {
+        throw new Error("XState service is not initialized. Ensure XState is properly installed.");
+      }
+      value = this.service.state.value;
+    }
+    
+    const format = this.options.stateValueFormat || 'auto';
+    if (format === 'string') {
+      return this.flattenStateValue(value);
+    } else if (format === 'object') {
+      return value;
+    } else {
+      // 'auto': return string for simple states, object for hierarchical
+      return typeof value === 'string' ? value : value;
+    }
+  }
+
+  /**
+   * Returns the raw XState state value without formatting.
+   * Used internally for state resolution and comparison.
+   * 
+   * @internal
+   */
+  private getRawStateValue(): any {
+    if (this.disposed) {
+      throw new Error("ModelExecutor has been disposed and cannot be used");
+    }
+    
+    if (this.isXStateV5 && this.actor) {
+      const snapshot = this.actor.getSnapshot();
+      return snapshot?.value || null;
+    } else {
       if (!this.service || !this.service.state) {
         throw new Error("XState service is not initialized. Ensure XState is properly installed.");
       }
@@ -302,56 +365,206 @@ export class ModelExecutor {
   }
 
   /**
+   * Returns the current state value as a flattened string.
+   * Useful for string comparisons and logging.
+   * 
+   * @example
+   * ```typescript
+   * executor.currentStateString // 'leads.current'
+   * executor.currentStateValue   // { leads: 'current' } or 'leads.current' (depends on format)
+   * ```
+   */
+  get currentStateString(): string {
+    const value = this.currentStateValue;
+    if (typeof value === 'string') {
+      return value;
+    }
+    return this.flattenStateValue(value);
+  }
+
+  /**
+   * Flattens a hierarchical state value into a dot-separated string.
+   * Example: { leads: 'current' } -> 'leads.current'
+   */
+  private flattenStateValue(value: any): string {
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'object' && value !== null) {
+      const parts: string[] = [];
+      for (const [key, val] of Object.entries(value)) {
+        if (typeof val === 'string') {
+          parts.push(`${key}.${val}`);
+        } else if (typeof val === 'object' && val !== null) {
+          const nested = this.flattenStateValue(val);
+          parts.push(`${key}.${nested}`);
+        } else {
+          parts.push(key);
+        }
+      }
+      return parts[0] || '';
+    }
+    return String(value);
+  }
+
+  /**
    * Convenience method: Dispatches an event and validates the resulting state.
    * Equivalent to calling dispatch() followed by validateCurrentState().
+   * Supports retry logic for flaky navigation scenarios.
    * 
    * @param event - The event name to dispatch
    * @param payload - Optional payload for the event
+   * @param options - Optional retry options (overrides defaultRetryOptions from constructor)
    * @returns Promise that resolves when transition and validation complete
    * 
    * @example
    * ```typescript
    * await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
-   * expect(executor.currentStateValue).toBe("dashboard");
+   * await executor.navigateAndValidate("NAVIGATE_TO_LEADS", null, {
+   *   retries: 2,
+   *   delay: 1000,
+   *   retryableErrors: ['Timeout', 'Network']
+   * });
    * ```
    */
-  async navigateAndValidate(event: string, payload?: any): Promise<void> {
-    await this.dispatch(event, payload);
-    await this.validateCurrentState();
+  async navigateAndValidate(
+    event: string,
+    payload?: any,
+    options?: RetryOptions
+  ): Promise<void> {
+    const retryOptions = options || this.options.defaultRetryOptions || {};
+    const { retries = 0, delay = 1000, retryableErrors = [] } = retryOptions;
+    
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        await this.dispatch(event, payload);
+        await this.validateCurrentState();
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        const shouldRetry = attempt < retries && (
+          retryableErrors.length === 0 ||
+          retryableErrors.some(pattern => lastError!.message.includes(pattern))
+        );
+        
+        if (!shouldRetry) {
+          if (this.options.screenshotOnFailure) {
+            await this.captureScreenshot(lastError);
+          }
+          throw lastError;
+        }
+        
+        // Wait before retry
+        await this.page.waitForTimeout(delay);
+      }
+    }
+    
+    if (lastError) {
+      if (this.options.screenshotOnFailure) {
+        await this.captureScreenshot(lastError);
+      }
+      throw lastError;
+    }
   }
 
   /**
    * Convenience method: Validates current state and asserts state value matches expected.
    * Combines validateCurrentState() with state value assertion for common test patterns.
+   * Provides enhanced error messages with full context.
    * 
    * @param expectedState - The expected state value (string or object)
    * @param options - Optional validation options
    * @param options.strict - If true, validates UI state even if state machine matches (default: false)
    * @returns Promise that resolves when validation passes
-   * @throws Error if validation fails or state doesn't match
+   * @throws StateValidationError if validation fails or state doesn't match
    * 
    * @example
    * ```typescript
    * await executor.expectState("home");
+   * await executor.expectState("leads.current");
    * await executor.expectState({ docs: "overview" });
    * await executor.expectState("dashboard", { strict: true });
    * ```
    */
   async expectState(expectedState: any, options?: { strict?: boolean }): Promise<void> {
-    await this.validateCurrentState();
-    const actualState = this.currentStateValue;
+    try {
+      await this.validateCurrentState();
+    } catch (error) {
+      const rawStateValue = this.getRawStateValue();
+      const expectedStateStr = typeof expectedState === 'string' 
+        ? expectedState 
+        : this.flattenStateValue(expectedState);
+      
+      if (error instanceof StateValidationError) {
+        // Update the error with expected state context
+        throw new StateValidationError({
+          expectedState: expectedStateStr,
+          currentState: error.details.currentState,
+          currentUrl: error.details.currentUrl,
+          validationChain: error.details.validationChain,
+          originalError: error.details.originalError,
+        });
+      }
+      
+      throw new StateValidationError({
+        expectedState: expectedStateStr,
+        currentState: this.currentStateString,
+        currentUrl: this.page.url(),
+        validationChain: resolveStatePaths(rawStateValue),
+        originalError: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
     
-    const actualJson = JSON.stringify(actualState);
-    const expectedJson = JSON.stringify(expectedState);
+    const rawStateValue = this.getRawStateValue();
+    const expectedStateStr = typeof expectedState === 'string' 
+      ? expectedState 
+      : this.flattenStateValue(expectedState);
+    const actualStateStr = this.currentStateString;
     
-    if (actualJson !== expectedJson) {
-      throw new Error(
-        `[ModelExecutor] State mismatch. Expected: ${expectedJson}, Actual: ${actualJson}`
-      );
+    if (actualStateStr !== expectedStateStr) {
+      throw new StateValidationError({
+        expectedState: expectedStateStr,
+        currentState: actualStateStr,
+        currentUrl: this.page.url(),
+        validationChain: resolveStatePaths(rawStateValue),
+        originalError: null,
+      });
     }
     
     if (options?.strict) {
       await this.validateCurrentState();
+    }
+  }
+
+  /**
+   * Captures a screenshot on failure if screenshotOnFailure is enabled.
+   * 
+   * @internal
+   */
+  private async captureScreenshot(error: Error): Promise<void> {
+    if (!this.options.screenshotOnFailure) {
+      return;
+    }
+
+    try {
+      const path = typeof this.options.screenshotPath === 'function'
+        ? this.options.screenshotPath(this.options.testInfo)
+        : this.options.screenshotPath || `test-results/failure-${Date.now()}.png`;
+      
+      await this.page.screenshot({ path, fullPage: true });
+      
+      if (this.options.testInfo) {
+        this.options.testInfo.attachments.push({
+          name: 'state-validation-failure',
+          path,
+          contentType: 'image/png',
+        });
+      }
+    } catch (screenshotError) {
+      // Don't throw - screenshot failure shouldn't mask the original error
     }
   }
 

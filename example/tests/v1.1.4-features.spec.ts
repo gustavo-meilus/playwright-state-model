@@ -16,12 +16,15 @@ import { ApiPage } from "../src/pages/ApiPage";
 test.describe("v1.1.4 New Features", () => {
   test("should use gotoState() for state-driven navigation", async ({ page }) => {
     const executor = createExecutor(page, playwrightDevMachine, (factory) => {
-      factory.register("home", HomePage);
-      factory.register("docs", DocsOverviewPage);
-      factory.register("docs.overview", DocsOverviewPage);
-      factory.register("docs.gettingStarted", GettingStartedPage);
-      factory.register("docs.api", ApiPage);
-      factory.register("api", ApiPage);
+      // Using bulk registration (v1.1.5+ feature)
+      factory.registerStates({
+        "home": HomePage,
+        "docs": DocsOverviewPage,
+        "docs.overview": DocsOverviewPage,
+        "docs.gettingStarted": GettingStartedPage,
+        "docs.api": ApiPage,
+        "api": ApiPage,
+      });
     });
 
     await executor.gotoState("home");
@@ -41,12 +44,14 @@ test.describe("v1.1.4 New Features", () => {
     page,
   }) => {
     const executor = createExecutor(page, playwrightDevMachine, (factory) => {
-      factory.register("home", HomePage);
-      factory.register("docs", DocsOverviewPage);
-      factory.register("docs.overview", DocsOverviewPage);
-      factory.register("docs.gettingStarted", GettingStartedPage);
-      factory.register("docs.api", ApiPage);
-      factory.register("api", ApiPage);
+      factory.registerStates({
+        "home": HomePage,
+        "docs": DocsOverviewPage,
+        "docs.overview": DocsOverviewPage,
+        "docs.gettingStarted": GettingStartedPage,
+        "docs.api": ApiPage,
+        "api": ApiPage,
+      });
     });
 
     await executor.gotoState("home");
@@ -66,12 +71,14 @@ test.describe("v1.1.4 New Features", () => {
     page,
   }) => {
     const executor = createExecutor(page, playwrightDevMachine, (factory) => {
-      factory.register("home", HomePage);
-      factory.register("docs", DocsOverviewPage);
-      factory.register("docs.overview", DocsOverviewPage);
-      factory.register("docs.gettingStarted", GettingStartedPage);
-      factory.register("docs.api", ApiPage);
-      factory.register("api", ApiPage);
+      factory.registerStates({
+        "home": HomePage,
+        "docs": DocsOverviewPage,
+        "docs.overview": DocsOverviewPage,
+        "docs.gettingStarted": GettingStartedPage,
+        "docs.api": ApiPage,
+        "api": ApiPage,
+      });
     });
 
     await executor.gotoState("home");
@@ -87,12 +94,14 @@ test.describe("v1.1.4 New Features", () => {
 
   test("should use enhanced expectState() with strict mode", async ({ page }) => {
     const executor = createExecutor(page, playwrightDevMachine, (factory) => {
-      factory.register("home", HomePage);
-      factory.register("docs", DocsOverviewPage);
-      factory.register("docs.overview", DocsOverviewPage);
-      factory.register("docs.gettingStarted", GettingStartedPage);
-      factory.register("docs.api", ApiPage);
-      factory.register("api", ApiPage);
+      factory.registerStates({
+        "home": HomePage,
+        "docs": DocsOverviewPage,
+        "docs.overview": DocsOverviewPage,
+        "docs.gettingStarted": GettingStartedPage,
+        "docs.api": ApiPage,
+        "api": ApiPage,
+      });
     });
 
     await executor.gotoState("home");

@@ -4,4 +4,5 @@ export { StateFactory } from "./StateFactory";
 export { ModelExecutor } from "./ModelExecutor";
 export { createExecutor } from "./createExecutor";
 export { resolveStatePaths } from "./utils";
+export { StateValidationError } from "./StateValidationError";
 export * from "./types";

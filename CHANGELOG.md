@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Enhanced Error Messages** - `StateValidationError` class with rich context (expected state, current state, URL, validation chain, original error)
+- **State Value String Getter** - `currentStateString` property for consistent string-based state comparisons
+- **Event Payload Support** - `getPayload<T>()` method in `BaseState` for type-safe access to event payloads in Page Object handlers
+- **Built-in Retry Logic** - `RetryOptions` interface and retry support in `navigateAndValidate()` for flaky navigation scenarios
+- **Screenshot on Failure** - Automatic screenshot capture on validation failures via `screenshotOnFailure` option
+- **Bulk State Registration** - `registerStates()` method in `StateFactory` for registering multiple states at once
+- **ModelExecutorOptions** - Comprehensive options interface for configuring ModelExecutor behavior
+- **State Value Format Options** - Configurable state value format (`'object'`, `'string'`, or `'auto'`)
+
+### Changed
+
+- Enhanced `expectState()` with improved error messages using `StateValidationError`
+- Enhanced `navigateAndValidate()` with retry support and better error handling
+- Updated `createExecutor()` to accept `ModelExecutorOptions`
+- Improved `validateCurrentState()` error messages with full context
+- `dispatch()` now sets event payload in all states in chain before handler execution
+
+### Documentation
+
+- Added `IMPROVEMENTS_IMPLEMENTED.md` documenting all feedback-based improvements
+
 ## [1.1.4] - 2024-12-XX
 
 ### Added

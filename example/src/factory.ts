@@ -7,16 +7,20 @@ import { ApiPage } from "./pages/ApiPage";
 
 /**
  * Configures the StateFactory with all Page Object mappings.
+ * Uses bulk registration for cleaner code.
  */
 export function createStateFactory(page: Page): StateFactory {
   const factory = new StateFactory(page);
 
-  factory.register("home", HomePage);
-  factory.register("docs", DocsOverviewPage);
-  factory.register("docs.overview", DocsOverviewPage);
-  factory.register("docs.gettingStarted", GettingStartedPage);
-  factory.register("docs.api", ApiPage);
-  factory.register("api", ApiPage);
+  // Bulk registration - cleaner and more maintainable
+  factory.registerStates({
+    "home": HomePage,
+    "docs": DocsOverviewPage,
+    "docs.overview": DocsOverviewPage,
+    "docs.gettingStarted": GettingStartedPage,
+    "docs.api": ApiPage,
+    "api": ApiPage,
+  });
 
   return factory;
 }

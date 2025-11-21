@@ -23,6 +23,27 @@ export class StateFactory {
   }
 
   /**
+   * Bulk registers multiple state IDs to Page Object classes.
+   * Reduces boilerplate when registering many states.
+   * 
+   * @param states - Object mapping state IDs to Page Object classes
+   * 
+   * @example
+   * ```typescript
+   * factory.registerStates({
+   *   'dashboard': DashboardPage,
+   *   'leads.current': CurrentLeadsPage,
+   *   'leads.single': SingleLeadPage,
+   * });
+   * ```
+   */
+  registerStates(states: Record<string, StateConstructor<any>>): void {
+    for (const [id, stateClass] of Object.entries(states)) {
+      this.register(id, stateClass);
+    }
+  }
+
+  /**
    * Creates a Page Object injected with specific Context Data.
    * Each call creates a new instance, ensuring no shared state between calls.
    */
