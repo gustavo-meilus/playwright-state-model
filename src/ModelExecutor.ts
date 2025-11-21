@@ -136,15 +136,36 @@ export class ModelExecutor {
 
   /**
    * Validates the entire UI composition (Root -> Leaf).
+   * Provides detailed error messages if validation fails.
    */
   async validateCurrentState(): Promise<void> {
     if (this.disposed) {
       throw new Error("ModelExecutor has been disposed and cannot be used");
     }
     const chain = this.getActiveStateChain();
+    const stateValue = this.currentStateValue;
 
-    for (const stateObj of chain) {
-      await stateObj.validateState();
+    if (chain.length === 0) {
+      throw new Error(
+        `[ModelExecutor] No Page Objects found for state: ${JSON.stringify(stateValue)}. ` +
+        `Ensure all states are registered in StateFactory.`
+      );
+    }
+
+    for (let i = 0; i < chain.length; i++) {
+      const stateObj = chain[i];
+      const stateId = resolveStatePaths(stateValue)[i];
+      
+      try {
+        await stateObj.validateState();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(
+          `[ModelExecutor] State validation failed for '${stateId}': ${errorMessage}. ` +
+          `Current state value: ${JSON.stringify(stateValue)}. ` +
+          `Validation chain: ${chain.map((_, idx) => resolveStatePaths(stateValue)[idx]).join(" → ")}`
+        );
+      }
     }
   }
 
@@ -277,6 +298,53 @@ export class ModelExecutor {
         throw new Error("XState service is not initialized. Ensure XState is properly installed.");
       }
       return this.service.state.value;
+    }
+  }
+
+  /**
+   * Convenience method: Dispatches an event and validates the resulting state.
+   * Equivalent to calling dispatch() followed by validateCurrentState().
+   * 
+   * @param event - The event name to dispatch
+   * @param payload - Optional payload for the event
+   * @returns Promise that resolves when transition and validation complete
+   * 
+   * @example
+   * ```typescript
+   * await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
+   * expect(executor.currentStateValue).toBe("dashboard");
+   * ```
+   */
+  async navigateAndValidate(event: string, payload?: any): Promise<void> {
+    await this.dispatch(event, payload);
+    await this.validateCurrentState();
+  }
+
+  /**
+   * Convenience method: Validates current state and asserts state value matches expected.
+   * Combines validateCurrentState() with state value assertion for common test patterns.
+   * 
+   * @param expectedState - The expected state value (string or object)
+   * @returns Promise that resolves when validation passes
+   * @throws Error if validation fails or state doesn't match
+   * 
+   * @example
+   * ```typescript
+   * await executor.expectState("home");
+   * await executor.expectState({ docs: "overview" });
+   * ```
+   */
+  async expectState(expectedState: any): Promise<void> {
+    await this.validateCurrentState();
+    const actualState = this.currentStateValue;
+    
+    const actualJson = JSON.stringify(actualState);
+    const expectedJson = JSON.stringify(expectedState);
+    
+    if (actualJson !== expectedJson) {
+      throw new Error(
+        `[ModelExecutor] State mismatch. Expected: ${expectedJson}, Actual: ${actualJson}`
+      );
     }
   }
 

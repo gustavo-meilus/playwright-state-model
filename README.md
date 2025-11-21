@@ -87,6 +87,31 @@ export function createStateFactory(page: Page): StateFactory {
 
 ### 4. Use ModelExecutor in Tests
 
+**Option A: Using convenience helper (recommended for reduced boilerplate)**
+
+```typescript
+import { test, expect } from "@playwright/test";
+import { createExecutor } from "playwright-state-model";
+import { appMachine } from "./machine";
+import { HomePage } from "./pages/HomePage";
+import { DashboardPage } from "./pages/DashboardPage";
+
+test("navigate through states", async ({ page }) => {
+  const executor = createExecutor(page, appMachine, (factory) => {
+    factory.register("home", HomePage);
+    factory.register("dashboard", DashboardPage);
+  });
+
+  await page.goto("https://example.com");
+  await executor.expectState("home");
+
+  await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
+  await executor.expectState("dashboard");
+});
+```
+
+**Option B: Traditional setup (more explicit)**
+
 ```typescript
 import { test, expect } from "@playwright/test";
 import { ModelExecutor } from "playwright-state-model";
@@ -142,6 +167,72 @@ test("navigate through states", async ({ page }) => {
 ### Type-Safe • Full TypeScript Support
 
 **Complete type inference**. Full TypeScript support with proper type inference for state machines, Page Objects, and context data.
+
+## Best Practices
+
+### When to Use State Model vs Direct Navigation
+
+**Use State Model (`dispatch()` / `navigateAndValidate()`) when:**
+
+- ✅ Testing navigation flows and state transitions
+- ✅ Verifying state machine correctness
+- ✅ Testing complex multi-page workflows
+- ✅ You want automatic state validation after transitions
+- ✅ You need to ensure state consistency across tests
+
+**Use Direct Navigation (`page.goto()` / `pageObject.goto()`) when:**
+
+- ✅ Testing a single page in isolation
+- ✅ API-only tests (no UI state)
+- ✅ Performance-critical tests where state validation overhead isn't needed
+- ✅ Testing page-specific functionality that doesn't involve navigation
+
+**Example: State transitions (recommended for navigation tests)**
+
+```typescript
+// ✅ Good: Uses state machine for navigation
+await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
+await executor.expectState("dashboard");
+```
+
+**Example: Direct navigation (acceptable for single-page tests)**
+
+```typescript
+// ✅ Also fine: Direct navigation for simple page tests
+await app.dashboard.goto();
+await app.dashboard.waitForLoad();
+```
+
+### Reducing Boilerplate
+
+Use `createExecutor()` helper to reduce setup code:
+
+```typescript
+// Before: 3 lines
+const factory = createStateFactory(page);
+const executor = new ModelExecutor(page, appMachine, factory);
+
+// After: 1 line
+const executor = createExecutor(page, appMachine, (factory) => {
+  factory.register("home", HomePage);
+  factory.register("dashboard", DashboardPage);
+});
+```
+
+### Convenience Methods
+
+Use `navigateAndValidate()` and `expectState()` for cleaner test code:
+
+```typescript
+// Before: 2 lines
+await executor.dispatch("NAVIGATE_TO_DASHBOARD");
+await executor.validateCurrentState();
+expect(executor.currentStateValue).toBe("dashboard");
+
+// After: 1 line
+await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
+await executor.expectState("dashboard");
+```
 
 ## Examples
 
@@ -255,12 +346,23 @@ Orchestrates state machine execution and Page Object validation. The main entry 
 
 **Methods:**
 
-- `validateCurrentState(): Promise<void>` - Validates the entire state hierarchy
+- `validateCurrentState(): Promise<void>` - Validates the entire state hierarchy with detailed error messages
 - `dispatch(event: string, payload?: any): Promise<void>` - Dispatches an event and validates the new state
+- `navigateAndValidate(event: string, payload?: any): Promise<void>` - Convenience method: dispatches event and validates state
+- `expectState(expectedState: any): Promise<void>` - Validates current state and asserts it matches expected value
+- `dispose(): void` - Cleans up resources (XState interpreter/actor)
 
 **Properties:**
 
 - `currentStateValue` - Returns the current XState value
+
+### `createExecutor`
+
+Convenience function to reduce boilerplate when creating ModelExecutor instances.
+
+**Function:**
+
+- `createExecutor(page: Page, machine: AnyStateMachine, factoryCreator: (factory: StateFactory) => void): ModelExecutor` - Creates and configures a ModelExecutor in one call
 
 ### `ActionLocator<TNext>`
 
@@ -375,6 +477,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 - [Playwright Documentation](https://playwright.dev)
 - [XState Documentation](https://xstate.js.org)
 - [Example Project](./example/)
+- [Usage Guide](./USAGE_GUIDE.md) - Best practices and when to use state model
 - [AI Agents](./agents/)
 - [API Reference](#api-reference)
 
