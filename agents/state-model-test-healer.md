@@ -194,6 +194,8 @@ expect(actualState).toEqual(expectedState);
 - Check that state transitions work correctly
 - Confirm Page Object validations pass
 - Ensure no new errors are introduced
+- **Test parallelism**: Run tests with `--repeat-each 10 --workers 5` to verify stability and race condition safety
+- Verify tests pass consistently across multiple parallel executions
 
 ### 7. **Iteration**
 
@@ -234,6 +236,19 @@ expect(actualState).toEqual(expectedState);
 - **Clear Error Messages**: Add comments explaining fixes
 - **Maintainability**: Fix root causes, not symptoms
 - **Type Safety**: Ensure TypeScript types are correct
+
+### Parallelism and Race Condition Safety
+
+- **Test Isolation**: Each test must be completely independent - no shared state between tests
+- **No Global State**: Avoid modifying global variables, singletons, or shared resources
+- **Page Isolation**: Each test gets its own `page` fixture - never share pages between tests
+- **Executor Isolation**: Create new `ModelExecutor` instance per test - never reuse executors
+- **State Machine Isolation**: Each executor uses its own state machine instance
+- **Factory Isolation**: Create factory per test - factories are lightweight and safe to recreate
+- **No Side Effects**: Tests should not depend on execution order or affect other tests
+- **Parallel Execution**: Always verify tests pass with `--repeat-each 10 --workers 5`
+- **Race Condition Prevention**: Use Playwright's built-in auto-waiting; avoid manual timing dependencies
+- **Idempotent Operations**: Ensure event handlers and validations are idempotent when possible
 
 ## Common Failure Patterns
 
@@ -279,6 +294,22 @@ Fix: Use .toEqual() for hierarchical states or fix state machine transition
 ```
 Error: State didn't change after dispatch
 Fix: Add event handler to XState machine 'on' block
+```
+
+### Pattern 7: Race Condition / Parallel Execution Failure
+
+```
+Error: Test passes with 1 worker but fails with multiple workers
+Cause: Shared state, non-isolated test, or timing dependencies
+Fix: Ensure complete test isolation - each test creates its own executor, factory, and page
+```
+
+### Pattern 8: Flaky Test Under Parallel Execution
+
+```
+Error: Test intermittently fails when run in parallel
+Cause: Race conditions, shared resources, or timing issues
+Fix: Remove all shared state, use Playwright auto-waiting, ensure test independence
 ```
 
 ## Special Handling
@@ -362,6 +393,52 @@ async NAVIGATE_TO_DOCS(): Promise<void> {
 }
 ```
 
+## Parallelism Testing Requirements
+
+### Mandatory Verification Steps
+
+1. **Single Worker Test**: Verify test passes with default execution
+2. **Parallel Execution Test**: Run with `--repeat-each 10 --workers 5` to verify stability
+3. **Race Condition Check**: Ensure no shared state or timing dependencies
+4. **Isolation Verification**: Confirm each test creates its own executor and factory
+
+### Common Parallelism Issues to Fix
+
+**Shared Executor Instance:**
+```typescript
+// ❌ WRONG - Shared executor across tests
+let executor: ModelExecutor;
+test.beforeAll(async ({ page }) => {
+  executor = new ModelExecutor(page, machine, factory); // Shared!
+});
+
+// ✅ CORRECT - Isolated executor per test
+test("should work", async ({ page }) => {
+  const executor = new ModelExecutor(page, machine, factory); // Isolated!
+});
+```
+
+**Shared Factory with State:**
+```typescript
+// ❌ WRONG - Factory might retain state
+const factory = createStateFactory(page); // Created once, reused
+
+// ✅ CORRECT - Fresh factory per test
+test("should work", async ({ page }) => {
+  const factory = createStateFactory(page); // Fresh instance
+  const executor = new ModelExecutor(page, machine, factory);
+});
+```
+
+**Timing Dependencies:**
+```typescript
+// ❌ WRONG - Manual waits create race conditions
+await page.waitForTimeout(1000); // Timing-dependent
+
+// ✅ CORRECT - Use Playwright auto-waiting
+await expect(page.locator('h1')).toBeVisible(); // Auto-waits
+```
+
 ## Non-Interactive Behavior
 
 - **Do not ask user questions**: Make the most reasonable fix based on error analysis
@@ -369,6 +446,7 @@ async NAVIGATE_TO_DOCS(): Promise<void> {
 - **Be thorough**: Check all related files (machine, factory, Page Objects, tests)
 - **Be systematic**: Follow the workflow methodically
 - **Document decisions**: Add comments explaining non-obvious fixes
+- **Verify parallelism**: Always test with `--repeat-each 10 --workers 5` after fixes
 
 ## References
 

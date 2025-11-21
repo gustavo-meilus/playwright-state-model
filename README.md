@@ -182,16 +182,23 @@ class UserDashboard extends BaseState<{ userId: string }> {
 
 ### Complete Example
 
-See the [`example/`](./example/) directory for a complete working example testing [playwright.dev](https://playwright.dev).
+See the [`example/`](./example/) directory for a complete working example testing [playwright.dev](https://playwright.dev). The example includes:
+
+- Comprehensive test coverage with 38 tests
+- Test helpers and constants for maintainability
+- Parallelism-safe test design
+- Race condition prevention patterns
 
 ## AI Agents
 
 **playwright-state-model** includes AI agents to help you build, maintain, and debug model-based tests:
 
 - **🎯 Planner** - Creates comprehensive test plans using XState and Page Objects
-- **⚡ Generator** - Generates complete test implementations from plans
-- **🔧 Healer** - Automatically fixes failing tests
+- **⚡ Generator** - Generates complete test implementations from plans with parallelism safety
+- **🔧 Healer** - Automatically fixes failing tests and verifies parallelism safety
 - **🏗️ Module Builder** - Helps develop and maintain the module itself
+
+All agents are designed to ensure tests are **parallelism-safe** and **race condition-free**, automatically verifying tests pass with `--repeat-each 10 --workers 5`.
 
 ### Getting Started with Agents
 

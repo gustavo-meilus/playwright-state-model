@@ -1,8 +1,10 @@
 import { Page, expect } from "@playwright/test";
 import { BaseState } from "playwright-state-model";
+import { URL_PATTERNS } from "../constants";
 
 /**
  * Page Object Model for Playwright.dev API Documentation Page.
+ * Follows Single Responsibility Principle - handles only API page interactions.
  */
 export class ApiPage extends BaseState {
   constructor(page: Page, context?: any) {
@@ -10,7 +12,8 @@ export class ApiPage extends BaseState {
   }
 
   async validateState(): Promise<void> {
-    await expect(this.page).toHaveURL(/^https:\/\/playwright\.dev\/docs\/api\/?/);
+    // Matches /docs/api/class-playwright, /docs/api, etc.
+    await expect(this.page).toHaveURL(URL_PATTERNS.DOCS_API);
     await expect(this.page.locator("h1")).toBeVisible();
   }
 

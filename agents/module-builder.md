@@ -142,6 +142,59 @@ Apply SOLID principles: Single Responsibility, Open/Closed, Liskov Substitution,
 - Clean up resources in `test.afterEach()`
 - Avoid shared state between tests
 
+### Thread-Safety and Multi-Worker Support
+
+**CRITICAL**: All code MUST be thread-safe to support Playwright's parallel test execution with multiple workers.
+
+#### Instance Isolation
+
+- All classes MUST be instance-based with no shared global state
+- Each instance MUST maintain its own independent state
+- Never use static variables or module-level mutable state
+- Each test worker operates on separate instances
+
+#### Concurrent Operation Serialization
+
+- Methods that modify shared instance state MUST serialize concurrent calls
+- Use promise-based queues to ensure sequential execution of critical operations
+- Example pattern: Queue concurrent `dispatch()` calls to prevent race conditions
+- Document thread-safety guarantees in JSDoc comments
+
+#### State Machine Executors
+
+- Each `ModelExecutor` instance MUST have its own XState interpreter
+- Serialize concurrent `dispatch()` operations using a promise queue
+- Prevent race conditions when multiple dispatches occur simultaneously
+- Ensure state transitions are atomic and consistent
+
+#### Resource Cleanup
+
+- Provide `dispose()` methods for classes that manage resources (e.g., XState interpreters)
+- Check disposed state before operations and throw descriptive errors
+- Prevent use-after-disposal bugs
+- Clean up in `test.afterEach()` when appropriate
+
+#### Console Output
+
+- NEVER use `console.log()`, `console.warn()`, or `console.error()` in production code
+- These cause interleaved output in multi-worker scenarios
+- Use debug flags or proper logging libraries if logging is required
+- Remove all console statements before committing
+
+#### Shared State Prevention
+
+- Avoid singleton patterns unless absolutely necessary and properly synchronized
+- Never share mutable state between instances
+- Use dependency injection instead of global state
+- Each test worker must operate independently
+
+#### Validation
+
+- All code MUST pass tests with multiple workers (e.g., `workers: 6`)
+- Test concurrent operations explicitly (e.g., concurrent dispatches)
+- Verify no race conditions exist in parallel execution scenarios
+- Ensure deterministic behavior regardless of worker count
+
 ### Page Object Model
 
 - Extend `BaseState` for all Page Objects
@@ -170,10 +223,10 @@ You MUST NOT use any other inline comments (`//` or `/* */`) for explanation in 
 
 ### Debugging
 
-- Use `console.log()` sparingly (only for debugging)
-- Consider debug mode flag for verbose output
+- NEVER use `console.log()`, `console.warn()`, or `console.error()` in production code (causes interleaved output in multi-worker scenarios)
+- Use debug mode flag for verbose output if logging is required
 - Include stack traces for unexpected errors
-- Remove debug logs before committing
+- Remove all debug logs before committing
 
 ## Testing Guidelines
 
@@ -224,6 +277,8 @@ You MUST NOT use any other inline comments (`//` or `/* */`) for explanation in 
 - Clean up resources properly
 - Avoid memory leaks in long-running tests
 - Dispose of services and interpreters when done
+- Implement `dispose()` methods for classes managing resources (XState interpreters, event listeners, etc.)
+- Ensure proper cleanup in multi-worker scenarios to prevent resource exhaustion
 
 ## Project Structure
 

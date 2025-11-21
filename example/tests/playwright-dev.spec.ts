@@ -1,63 +1,48 @@
-import { test, expect } from "@playwright/test";
-import { ModelExecutor } from "playwright-state-model";
-import { playwrightDevMachine } from "../src/machine";
-import { createStateFactory } from "../src/factory";
+import { test } from "@playwright/test";
+import {
+  initializeTest,
+  initializeTestFromHome,
+  expect,
+} from "./helpers/test-setup";
+import { STATE_VALUES, EVENTS } from "../src/constants";
 
 test.describe("Playwright.dev Navigation Model", () => {
   test("should navigate through states using XState model", async ({ page }) => {
-    const factory = createStateFactory(page);
-    const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+    const executor = await initializeTestFromHome(page);
 
-    await page.goto("https://playwright.dev");
+    await executor.dispatch(EVENTS.NAVIGATE_TO_DOCS);
+    expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
 
-    await executor.validateCurrentState();
-    expect(executor.currentStateValue).toBe("home");
+    await executor.dispatch(EVENTS.NAVIGATE_TO_GETTING_STARTED);
+    expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_GETTING_STARTED);
 
-    await executor.dispatch("NAVIGATE_TO_DOCS");
-    expect(executor.currentStateValue).toEqual({ docs: "overview" });
+    await executor.dispatch(EVENTS.NAVIGATE_TO_OVERVIEW);
+    expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
 
-    await executor.dispatch("NAVIGATE_TO_GETTING_STARTED");
-    expect(executor.currentStateValue).toEqual({ docs: "gettingStarted" });
+    await executor.dispatch(EVENTS.NAVIGATE_TO_API);
+    expect(executor.currentStateValue).toBe(STATE_VALUES.API);
 
-    await executor.dispatch("NAVIGATE_TO_OVERVIEW");
-    expect(executor.currentStateValue).toEqual({ docs: "overview" });
-
-    await executor.dispatch("NAVIGATE_TO_API");
-    expect(executor.currentStateValue).toBe("api");
-
-    await executor.dispatch("NAVIGATE_TO_HOME");
-    expect(executor.currentStateValue).toBe("home");
+    await executor.dispatch(EVENTS.NAVIGATE_TO_HOME);
+    expect(executor.currentStateValue).toBe(STATE_VALUES.HOME);
   });
 
   test("should handle direct navigation to API from home", async ({ page }) => {
-    const factory = createStateFactory(page);
-    const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+    const executor = await initializeTestFromHome(page);
 
-    await page.goto("https://playwright.dev");
-
-    await executor.validateCurrentState();
-    expect(executor.currentStateValue).toBe("home");
-
-    await executor.dispatch("NAVIGATE_TO_API");
-    expect(executor.currentStateValue).toBe("api");
+    await executor.dispatch(EVENTS.NAVIGATE_TO_API);
+    expect(executor.currentStateValue).toBe(STATE_VALUES.API);
 
     await executor.validateCurrentState();
   });
 
   test("should validate state hierarchy correctly", async ({ page }) => {
-    const factory = createStateFactory(page);
-    const executor = new ModelExecutor(page, playwrightDevMachine, factory);
+    const executor = await initializeTest(page);
 
-    await page.goto("https://playwright.dev");
-    await executor.validateCurrentState();
+    await executor.dispatch(EVENTS.NAVIGATE_TO_DOCS);
+    expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_OVERVIEW);
 
-    await executor.dispatch("NAVIGATE_TO_DOCS");
-    expect(executor.currentStateValue).toEqual({ docs: "overview" });
-
-    await executor.dispatch("NAVIGATE_TO_GETTING_STARTED");
-
-    const stateValue = executor.currentStateValue;
-    expect(stateValue).toEqual({ docs: "gettingStarted" });
+    await executor.dispatch(EVENTS.NAVIGATE_TO_GETTING_STARTED);
+    expect(executor.currentStateValue).toEqual(STATE_VALUES.DOCS_GETTING_STARTED);
 
     await executor.validateCurrentState();
   });

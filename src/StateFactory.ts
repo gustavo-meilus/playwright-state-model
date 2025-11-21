@@ -4,13 +4,12 @@ import { StateConstructor } from "./types";
 
 /**
  * Manages the mapping between XState IDs and Playwright Page Objects.
+ * Thread-safe: Each instance is independent and can be safely used across
+ * multiple test workers without shared state concerns.
  */
 export class StateFactory {
   private page: Page;
   private definitions: Map<string, StateConstructor<any>> = new Map();
-
-  // Stores the last created instance for debugging/logging
-  private lastInstance: BaseState | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -25,6 +24,7 @@ export class StateFactory {
 
   /**
    * Creates a Page Object injected with specific Context Data.
+   * Each call creates a new instance, ensuring no shared state between calls.
    */
   get<T extends BaseState>(id: string, context: any): T {
     const StateClass = this.definitions.get(id);
@@ -32,8 +32,6 @@ export class StateFactory {
       throw new Error(`StateFactory: No class registered for State ID '${id}'`);
     }
 
-    const instance = new StateClass(this.page, context);
-    this.lastInstance = instance;
-    return instance as T;
+    return new StateClass(this.page, context) as T;
   }
 }

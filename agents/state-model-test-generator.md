@@ -244,7 +244,7 @@ import { createStateFactory } from "../src/factory";
 
 test.describe("Application Navigation Model", () => {
   test("should navigate through all states", async ({ page }) => {
-    // 1. Initialize ModelExecutor
+    // 1. Initialize ModelExecutor - CRITICAL: Create fresh instances per test for parallelism safety
     const factory = createStateFactory(page);
     const executor = new ModelExecutor(page, appMachine, factory);
 
@@ -302,12 +302,14 @@ test.describe("Application Navigation Model", () => {
 **Key Rules:**
 
 - Import `ModelExecutor`, machine, and factory
-- Initialize `ModelExecutor` with page, machine, and factory
+- **CRITICAL**: Create fresh `ModelExecutor` and factory instances per test (never share between tests)
+- Initialize `ModelExecutor` with page, machine, and factory inside each test
 - Always validate state after navigation: `await executor.validateCurrentState()`
 - Assert state values: `.toBe()` for simple states, `.toEqual()` for hierarchical
 - Use `executor.dispatch()` for all state transitions
 - Group related tests with `test.describe()`
 - Use descriptive test names
+- **Parallelism Safety**: Each test must be completely isolated - no shared state, executors, or factories
 
 ## File Organization
 
@@ -373,6 +375,19 @@ tests/
 - **Check event handlers exist**: ModelExecutor validates handlers
 - **Verify state transitions**: Check state changed after dispatch
 
+### Parallelism and Race Condition Safety
+
+- **Test Isolation**: Each test must create its own executor, factory, and use its own page fixture
+- **No Shared State**: Never share executors, factories, or state between tests
+- **No Global Variables**: Avoid modifying global state or singletons
+- **Page Isolation**: Each test gets its own `page` fixture - never share pages
+- **Factory Per Test**: Create `createStateFactory(page)` inside each test, not in `beforeAll`
+- **Executor Per Test**: Create `new ModelExecutor()` inside each test, not in `beforeAll`
+- **Idempotent Operations**: Design event handlers to be idempotent when possible
+- **Auto-Waiting**: Use Playwright's auto-waiting instead of manual timeouts
+- **No Timing Dependencies**: Avoid `waitForTimeout()` - use element visibility checks instead
+- **Parallel Execution**: All generated tests must pass with `--repeat-each 10 --workers 5`
+
 ## Generation Workflow
 
 ### Step-by-Step Process
@@ -412,6 +427,8 @@ tests/
    - Verify imports are correct
    - Ensure state IDs match
    - Validate code structure
+   - **Verify Parallelism**: Ensure tests are isolated and can run in parallel
+   - **Check Isolation**: Confirm no shared state, executors, or factories between tests
 
 ## Context-Driven Testing
 
@@ -462,9 +479,12 @@ test("should display user-specific content", async ({ page }) => {
 
 - **Coverage**: Cover all state transitions
 - **Clarity**: Clear test names and structure
-- **Independence**: Tests can run in any order
+- **Independence**: Tests can run in any order and in parallel
+- **Isolation**: Each test is completely isolated - no shared state
 - **Maintainability**: Easy to understand and modify
 - **Reliability**: Use resilient selectors and patterns
+- **Parallelism**: Tests must pass consistently with `--repeat-each 10 --workers 5`
+- **Race Condition Safety**: No timing dependencies or shared resources
 
 ### Documentation
 
@@ -533,6 +553,42 @@ home: {
 }
 ```
 
+## Parallelism Anti-Patterns to Avoid
+
+**❌ WRONG - Shared Executor:**
+```typescript
+let executor: ModelExecutor;
+test.beforeAll(async ({ page }) => {
+  executor = new ModelExecutor(page, machine, factory);
+});
+test("test 1", async () => { await executor.dispatch("EVENT"); });
+test("test 2", async () => { await executor.dispatch("EVENT"); }); // Race condition!
+```
+
+**✅ CORRECT - Isolated Executor:**
+```typescript
+test("test 1", async ({ page }) => {
+  const factory = createStateFactory(page);
+  const executor = new ModelExecutor(page, machine, factory);
+  await executor.dispatch("EVENT");
+});
+test("test 2", async ({ page }) => {
+  const factory = createStateFactory(page);
+  const executor = new ModelExecutor(page, machine, factory);
+  await executor.dispatch("EVENT");
+});
+```
+
+**❌ WRONG - Manual Timing:**
+```typescript
+await page.waitForTimeout(1000); // Race condition risk
+```
+
+**✅ CORRECT - Auto-Waiting:**
+```typescript
+await expect(page.locator('h1')).toBeVisible(); // Playwright auto-waits
+```
+
 ## Non-Interactive Behavior
 
 - **Generate complete implementations**: Don't leave TODOs or placeholders
@@ -540,6 +596,7 @@ home: {
 - **Be thorough**: Generate all necessary files
 - **Verify consistency**: Ensure state IDs match across files
 - **Use best practices**: Follow all guidelines and standards
+- **Ensure parallelism safety**: All tests must be isolated and parallel-safe
 
 ## References
 

@@ -126,7 +126,11 @@ Each scenario should follow this format:
 
 **Steps:**
 
-1. Initialize ModelExecutor with machine and factory
+1. **Create fresh factory and executor** (CRITICAL for parallelism safety)
+   ```typescript
+   const factory = createStateFactory(page);
+   const executor = new ModelExecutor(page, machine, factory);
+   ```
 2. Navigate to initial state (if needed)
 3. Validate initial state using `executor.validateCurrentState()`
 4. Assert initial state value: `expect(executor.currentStateValue).toBe(...)`
@@ -134,6 +138,8 @@ Each scenario should follow this format:
 6. Assert new state value: `expect(executor.currentStateValue).toEqual(...)`
 7. Validate new state: `await executor.validateCurrentState()`
 8. [Continue with additional transitions as needed]
+
+**Note**: Each test must create its own executor and factory instances. Never share executors or factories between tests.
 
 **Expected Results:**
 
@@ -145,6 +151,9 @@ Each scenario should follow this format:
 **Edge Cases to Consider:**
 
 - [List any edge cases or error scenarios]
+- Parallel execution and race conditions
+- Test isolation and independence
+- Shared state prevention
 ```
 
 ## Quality Standards
@@ -169,11 +178,13 @@ Each scenario should follow this format:
 ### Test Implementation
 
 - Use `ModelExecutor` for all state management
+- **CRITICAL**: Create fresh `ModelExecutor` and factory instances per test (never share)
 - Always validate state after transitions: `await executor.validateCurrentState()`
 - Assert state values: `expect(executor.currentStateValue).toBe(...)` or `.toEqual(...)`
 - Use `executor.dispatch()` for all state transitions
-- Tests should be independent and runnable in any order
+- Tests should be independent and runnable in any order and in parallel
 - Include both positive and negative test scenarios
+- **Parallelism Safety**: Each test must be completely isolated - no shared state, executors, or factories
 
 ### Code Quality
 
@@ -182,6 +193,19 @@ Each scenario should follow this format:
 - Keep code clear, concise, and maintainable
 - Follow existing project patterns and conventions
 - Use async/await correctly
+
+### Parallelism and Race Condition Safety
+
+- **Test Isolation**: Each test must create its own executor, factory, and use its own page fixture
+- **No Shared State**: Never share executors, factories, or state between tests
+- **No Global Variables**: Avoid modifying global state or singletons
+- **Page Isolation**: Each test gets its own `page` fixture - never share pages
+- **Factory Per Test**: Create `createStateFactory(page)` inside each test, not in `beforeAll`
+- **Executor Per Test**: Create `new ModelExecutor()` inside each test, not in `beforeAll`
+- **Idempotent Operations**: Design event handlers to be idempotent when possible
+- **Auto-Waiting**: Use Playwright's auto-waiting instead of manual timeouts
+- **No Timing Dependencies**: Avoid `waitForTimeout()` - use element visibility checks instead
+- **Parallel Execution**: All planned tests must be designed to pass with `--repeat-each 10 --workers 5`
 
 ## Example Test Plan Structure
 
@@ -502,8 +526,37 @@ Always save the complete test plan as a markdown file with:
 4. **Hierarchy**: Leverage hierarchical states for complex UIs
 5. **Context**: Use XState context for data-driven testing scenarios
 6. **Independence**: Tests should be independent and order-agnostic
-7. **Completeness**: Cover all state transitions and edge cases
-8. **Maintainability**: Write clear, maintainable code following best practices
+7. **Parallelism Safety**: Tests must be isolated and safe for parallel execution
+8. **Completeness**: Cover all state transitions and edge cases
+9. **Maintainability**: Write clear, maintainable code following best practices
+
+## Parallelism Requirements in Test Plans
+
+When creating test plans, ensure all scenarios specify:
+
+- **Isolated Setup**: Each test creates its own executor and factory
+- **No Shared State**: Tests do not depend on execution order or shared resources
+- **Parallel Execution**: Tests are designed to run safely with multiple workers
+- **Race Condition Prevention**: No timing dependencies or shared state between tests
+
+**Example Pattern:**
+```typescript
+test("scenario name", async ({ page }) => {
+  // ✅ CORRECT - Fresh instances per test
+  const factory = createStateFactory(page);
+  const executor = new ModelExecutor(page, machine, factory);
+  // ... test implementation
+});
+```
+
+**Anti-Pattern to Avoid:**
+```typescript
+// ❌ WRONG - Shared executor
+let executor: ModelExecutor;
+test.beforeAll(async ({ page }) => {
+  executor = new ModelExecutor(page, machine, factory);
+});
+```
 
 ## References
 

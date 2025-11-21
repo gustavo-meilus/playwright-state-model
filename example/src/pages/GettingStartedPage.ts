@@ -1,8 +1,10 @@
 import { Page, expect } from "@playwright/test";
 import { BaseState } from "playwright-state-model";
+import { URL_PATTERNS } from "../constants";
 
 /**
  * Page Object Model for Playwright.dev Getting Started Page.
+ * Follows Single Responsibility Principle - handles only getting started page interactions.
  */
 export class GettingStartedPage extends BaseState {
   constructor(page: Page, context?: any) {
@@ -10,8 +12,12 @@ export class GettingStartedPage extends BaseState {
   }
 
   async validateState(): Promise<void> {
-    await expect(this.page).toHaveURL(/^https:\/\/playwright\.dev\/docs\/getting-started/);
-    await expect(this.page.locator("h1")).toContainText(/Getting started/i);
+    // Matches /docs/getting-started-vscode, /docs/getting-started, /docs/intro, etc.
+    await expect(this.page).toHaveURL(URL_PATTERNS.DOCS_GETTING_STARTED);
+    // Some getting started pages show "Installation" instead of "Getting started"
+    await expect(this.page.locator("h1").first()).toContainText(
+      /(Getting started|Installation)/i
+    );
   }
 
   async NAVIGATE_TO_OVERVIEW(): Promise<void> {

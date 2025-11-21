@@ -1,8 +1,10 @@
 import { Page, expect } from "@playwright/test";
 import { BaseState } from "playwright-state-model";
+import { URL_PATTERNS } from "../constants";
 
 /**
  * Page Object Model for Playwright.dev Homepage.
+ * Follows Single Responsibility Principle - handles only home page interactions.
  */
 export class HomePage extends BaseState {
   constructor(page: Page, context?: any) {
@@ -10,7 +12,7 @@ export class HomePage extends BaseState {
   }
 
   async validateState(): Promise<void> {
-    await expect(this.page).toHaveURL(/^https:\/\/playwright\.dev\/?$/);
+    await expect(this.page).toHaveURL(URL_PATTERNS.HOME);
     await expect(this.page.locator("h1")).toContainText(/Playwright/i);
   }
 
