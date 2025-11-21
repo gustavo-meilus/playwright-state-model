@@ -234,6 +234,40 @@ await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
 await executor.expectState("dashboard");
 ```
 
+### State-Driven Navigation
+
+Use `gotoState()` for state-machine-aware navigation instead of direct `goto()` calls:
+
+```typescript
+// Instead of direct navigation:
+await app.dashboard.goto();
+await executor.expectState("dashboard");
+
+// Use state-driven navigation:
+await executor.gotoState("dashboard");
+await executor.expectState("dashboard");
+```
+
+**Note**: `gotoState()` navigates to the page but doesn't update the state machine. For state transitions, use `navigateAndValidate()` instead.
+
+### State Synchronization
+
+Use `syncStateFromPage()` to detect state mismatches when navigation happens outside the state machine:
+
+```typescript
+// Direct URL change (bypasses state machine)
+await page.goto("https://example.com/dashboard");
+
+// Detect if state machine is out of sync
+try {
+  await executor.syncStateFromPage();
+  await executor.expectState("dashboard");
+} catch (error) {
+  // State machine needs updating - use navigateAndValidate() instead
+  await executor.navigateAndValidate("NAVIGATE_TO_DASHBOARD");
+}
+```
+
 ## Examples
 
 ### Hierarchical States
@@ -339,6 +373,7 @@ Maps XState state IDs to Page Object classes. Manages the registry of state-to-P
 
 - `register(id: string, stateClass: StateConstructor): void` - Register a state mapping
 - `get<T extends BaseState>(id: string, context: any): T` - Create a Page Object instance
+- `getRegisteredStates(): string[]` - Returns array of all registered state IDs
 
 ### `ModelExecutor`
 
@@ -349,7 +384,9 @@ Orchestrates state machine execution and Page Object validation. The main entry 
 - `validateCurrentState(): Promise<void>` - Validates the entire state hierarchy with detailed error messages
 - `dispatch(event: string, payload?: any): Promise<void>` - Dispatches an event and validates the new state
 - `navigateAndValidate(event: string, payload?: any): Promise<void>` - Convenience method: dispatches event and validates state
-- `expectState(expectedState: any): Promise<void>` - Validates current state and asserts it matches expected value
+- `expectState(expectedState: any, options?: { strict?: boolean }): Promise<void>` - Validates current state and asserts it matches expected value
+- `gotoState(targetState: any): Promise<void>` - Navigate directly to a target state through Page Object's `goto()` method (state-machine-aware navigation)
+- `syncStateFromPage(): Promise<void>` - Detect current page state and verify state machine synchronization
 - `dispose(): void` - Cleans up resources (XState interpreter/actor)
 
 **Properties:**

@@ -20,6 +20,10 @@ export class GettingStartedPage extends BaseState {
     );
   }
 
+  async goto(): Promise<void> {
+    await this.page.goto("https://playwright.dev/docs/intro");
+  }
+
   async NAVIGATE_TO_OVERVIEW(): Promise<void> {
     await this.page
       .getByRole("link", { name: /docs/i })

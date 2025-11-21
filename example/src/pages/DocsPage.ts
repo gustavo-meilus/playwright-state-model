@@ -26,6 +26,10 @@ export class DocsOverviewPage extends BaseState {
     await expect(this.page.locator("h1").first()).toBeVisible();
   }
 
+  async goto(): Promise<void> {
+    await this.page.goto("https://playwright.dev/docs");
+  }
+
   async NAVIGATE_TO_GETTING_STARTED(): Promise<void> {
     await this.page
       .getByRole("link", { name: /getting started/i })

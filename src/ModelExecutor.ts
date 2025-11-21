@@ -325,6 +325,8 @@ export class ModelExecutor {
    * Combines validateCurrentState() with state value assertion for common test patterns.
    * 
    * @param expectedState - The expected state value (string or object)
+   * @param options - Optional validation options
+   * @param options.strict - If true, validates UI state even if state machine matches (default: false)
    * @returns Promise that resolves when validation passes
    * @throws Error if validation fails or state doesn't match
    * 
@@ -332,9 +334,10 @@ export class ModelExecutor {
    * ```typescript
    * await executor.expectState("home");
    * await executor.expectState({ docs: "overview" });
+   * await executor.expectState("dashboard", { strict: true });
    * ```
    */
-  async expectState(expectedState: any): Promise<void> {
+  async expectState(expectedState: any, options?: { strict?: boolean }): Promise<void> {
     await this.validateCurrentState();
     const actualState = this.currentStateValue;
     
@@ -346,6 +349,195 @@ export class ModelExecutor {
         `[ModelExecutor] State mismatch. Expected: ${expectedJson}, Actual: ${actualJson}`
       );
     }
+    
+    if (options?.strict) {
+      await this.validateCurrentState();
+    }
+  }
+
+  /**
+   * Navigates directly to a target state by finding the appropriate Page Object
+   * and calling its goto() method (if available).
+   * This provides a state-machine-aware alternative to direct page.goto() calls.
+   * 
+   * Note: This method navigates to the page but does not update the state machine.
+   * After navigation, use syncStateFromPage() to verify the page matches the expected state,
+   * or use navigateAndValidate() if you need state transitions.
+   * 
+   * @param targetState - The target state value (string or object)
+   * @returns Promise that resolves when navigation completes
+   * @throws Error if state is not registered or goto() method is not available
+   * 
+   * @example
+   * ```typescript
+   * // Instead of: await app.dashboard.goto();
+   * await executor.gotoState("dashboard");
+   * await executor.syncStateFromPage(); // Verify page matches expected state
+   * await executor.expectState("dashboard");
+   * ```
+   */
+  async gotoState(targetState: any): Promise<void> {
+    if (this.disposed) {
+      throw new Error("ModelExecutor has been disposed and cannot be used");
+    }
+
+    const stateKeys = resolveStatePaths(targetState);
+    if (stateKeys.length === 0) {
+      throw new Error(
+        `[ModelExecutor] Invalid target state: ${JSON.stringify(targetState)}`
+      );
+    }
+
+    const leafStateKey = stateKeys[stateKeys.length - 1];
+    let machineContext: any;
+    
+    if (this.isXStateV5 && this.actor) {
+      const snapshot = this.actor.getSnapshot();
+      machineContext = snapshot?.context ?? {};
+    } else {
+      if (!this.service || !this.service.state) {
+        throw new Error("XState service is not initialized");
+      }
+      machineContext = this.service.state.context;
+    }
+
+    const stateObj = this.factory.get(leafStateKey, machineContext);
+    
+    if (typeof (stateObj as any).goto !== "function") {
+      throw new Error(
+        `[ModelExecutor] Page Object for state '${leafStateKey}' does not have a goto() method. ` +
+        `Add a goto() method to navigate directly to this state.`
+      );
+    }
+
+    await (stateObj as any).goto();
+  }
+
+  /**
+   * Synchronizes the state machine with the current page state by detecting
+   * which Page Object matches the current page and updating the state machine accordingly.
+   * This is useful when navigation happens outside the state machine (e.g., direct URL changes).
+   * 
+   * @returns Promise that resolves when state is synchronized
+   * @throws Error if no matching state is found for the current page
+   * 
+   * @example
+   * ```typescript
+   * await page.goto("https://example.com/dashboard");
+   * await executor.syncStateFromPage();
+   * await executor.expectState("dashboard");
+   * ```
+   */
+  async syncStateFromPage(): Promise<void> {
+    if (this.disposed) {
+      throw new Error("ModelExecutor has been disposed and cannot be used");
+    }
+
+    const registeredStates = this.factory.getRegisteredStates();
+    let matchedState: string | null = null;
+    let matchedStateObj: BaseState | null = null;
+
+    const sortedStates = registeredStates.sort((a, b) => {
+      const aDepth = a.split(".").length;
+      const bDepth = b.split(".").length;
+      return bDepth - aDepth;
+    });
+
+    for (const stateKey of sortedStates) {
+      try {
+        let machineContext: any;
+        
+        if (this.isXStateV5 && this.actor) {
+          const snapshot = this.actor.getSnapshot();
+          machineContext = snapshot?.context ?? {};
+        } else {
+          if (!this.service || !this.service.state) {
+            continue;
+          }
+          machineContext = this.service.state.context;
+        }
+
+        const stateObj = this.factory.get(stateKey, machineContext);
+        
+        try {
+          await stateObj.validateState();
+          matchedState = stateKey;
+          matchedStateObj = stateObj;
+          break;
+        } catch {
+          continue;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    if (!matchedState || !matchedStateObj) {
+      throw new Error(
+        `[ModelExecutor] Could not sync state from page. ` +
+        `No registered Page Object matches the current page state. ` +
+        `Current URL: ${this.page.url()}`
+      );
+    }
+
+    const stateValue = this.resolveStateValueFromKey(matchedState);
+    
+    if (this.isXStateV5 && this.actor) {
+      const snapshot = this.actor.getSnapshot();
+      const currentValue = snapshot?.value;
+      
+      if (JSON.stringify(currentValue) !== JSON.stringify(stateValue)) {
+        throw new Error(
+          `[ModelExecutor] State sync requires manual state machine update. ` +
+          `Current state: ${JSON.stringify(currentValue)}, ` +
+          `Detected page state: ${JSON.stringify(stateValue)}. ` +
+          `Use navigateAndValidate() or dispatch() to transition states properly.`
+        );
+      }
+    } else {
+      if (!this.service || !this.service.state) {
+        throw new Error("XState service is not initialized");
+      }
+      const currentValue = this.service.state.value;
+      
+      if (JSON.stringify(currentValue) !== JSON.stringify(stateValue)) {
+        throw new Error(
+          `[ModelExecutor] State sync requires manual state machine update. ` +
+          `Current state: ${JSON.stringify(currentValue)}, ` +
+          `Detected page state: ${JSON.stringify(stateValue)}. ` +
+          `Use navigateAndValidate() or dispatch() to transition states properly.`
+        );
+      }
+    }
+  }
+
+  /**
+   * Resolves a state key (e.g., "docs.overview") into a full state value object.
+   * Handles hierarchical state paths.
+   * Example: "docs.overview" -> { docs: "overview" }
+   */
+  private resolveStateValueFromKey(stateKey: string): any {
+    const parts = stateKey.split(".");
+    
+    if (parts.length === 1) {
+      return stateKey;
+    }
+    
+    if (parts.length === 2) {
+      return { [parts[0]]: parts[1] };
+    }
+    
+    let result: any = {};
+    let current = result;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      current[parts[i]] = {};
+      current = current[parts[i]];
+    }
+    
+    current[parts[parts.length - 1]] = parts[parts.length - 1];
+    
+    return result;
   }
 
   /**

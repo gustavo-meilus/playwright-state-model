@@ -17,6 +17,10 @@ export class ApiPage extends BaseState {
     await expect(this.page.locator("h1")).toBeVisible();
   }
 
+  async goto(): Promise<void> {
+    await this.page.goto("https://playwright.dev/docs/api");
+  }
+
   async NAVIGATE_TO_DOCS(): Promise<void> {
     await this.page.getByRole("link", { name: /docs/i }).first().click();
   }

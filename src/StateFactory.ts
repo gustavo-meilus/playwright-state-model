@@ -34,4 +34,12 @@ export class StateFactory {
 
     return new StateClass(this.page, context) as T;
   }
+
+  /**
+   * Returns an array of all registered state IDs.
+   * Useful for state synchronization and discovery.
+   */
+  getRegisteredStates(): string[] {
+    return Array.from(this.definitions.keys());
+  }
 }

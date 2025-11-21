@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2024-12-XX
+
+### Added
+
+- **`gotoState()` method** - Navigate directly to a target state through Page Object's `goto()` method, providing state-machine-aware navigation alternative to direct `page.goto()` calls
+- **`syncStateFromPage()` method** - Detect current page state and verify state machine synchronization, useful for debugging state mismatches when navigation happens outside the state machine
+- **Enhanced `expectState()` method** - Added optional `strict` mode for additional UI validation (though validation already includes UI checks)
+- **`getRegisteredStates()` method** - Added to `StateFactory` to retrieve all registered state IDs for state discovery and synchronization
+
+### Changed
+
+- Improved `expectState()` with optional validation options parameter
+- Enhanced error messages in `gotoState()` to guide users toward proper state transition patterns
+- Updated `BaseState` documentation to emphasize that `validateState()` should include real UI assertions, not just loading waits
+
+### Documentation
+
+- Updated README API reference with new methods
+- Added guidance on when to use `gotoState()` vs `navigateAndValidate()`
+
 ## [1.1.3] - 2024-11-21
 
 ### Added
