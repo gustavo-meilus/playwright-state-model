@@ -91,8 +91,37 @@ Categorize failures into these types:
 - Fix:
   - Ensure XState is installed: `npm install xstate`
   - Verify XState version: `npm list xstate` (should be ^4.30.0 or ^5.0.0)
-  - Check that playwright-state-model is up to date (v1.1.1+)
+  - Check that playwright-state-model is up to date (v1.1.2+)
   - The library automatically supports both XState v4 and v5 - no code changes needed
+  - The library handles actor/service internally - do not try to access or override `actor` property
+
+**I. ModelExecutor Extension Conflicts**
+
+- Error: "Cannot set property actor which has only a getter" or similar property conflicts
+- Cause: Custom `ModelExecutor` class trying to override or access internal `actor` property
+- Fix:
+  - **DO NOT** override or access `actor` property in custom ModelExecutor classes
+  - The library manages actor/service internally - use public API methods only
+  - Remove any custom `get actor()` or `set actor()` methods from extended classes
+  - Use `currentStateValue`, `validateCurrentState()`, and `dispatch()` instead
+  - Example fix:
+
+    ```typescript
+    // ❌ WRONG - Don't override actor
+    export class ModelExecutor extends PlaywrightStateModelExecutor {
+      get actor() {
+        return super.actor;
+      } // Causes error!
+    }
+
+    // ✅ CORRECT - Use public API
+    export class ModelExecutor extends PlaywrightStateModelExecutor {
+      // No actor override - library handles it internally
+      async customMethod() {
+        await super.validateCurrentState(); // Use public methods
+      }
+    }
+    ```
 
 ### 4. **Root Cause Analysis**
 
@@ -127,6 +156,8 @@ For each failure type, investigate:
 - Verify `executor.dispatch()` event names match XState events
 - Confirm `executor.validateCurrentState()` is called at right times
 - Review state value assertions match actual state structure
+- **If extending ModelExecutor**: Do not override or access internal `actor`/`service` properties
+- The library handles XState actor/service internally - use only public API methods
 
 ### 5. **Code Remediation**
 

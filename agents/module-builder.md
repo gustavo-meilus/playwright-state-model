@@ -169,6 +169,9 @@ Apply SOLID principles: Single Responsibility, Open/Closed, Liskov Substitution,
 - Serialize concurrent `dispatch()` operations using a promise queue
 - Prevent race conditions when multiple dispatches occur simultaneously
 - Ensure state transitions are atomic and consistent
+- **Internal Properties**: Keep `actor` and `service` private/internal - users should not access them directly
+- **Public API**: Expose only `currentStateValue`, `validateCurrentState()`, `dispatch()`, and `dispose()` as public API
+- **Extension Safety**: Design ModelExecutor so extending classes cannot accidentally override internal properties
 
 #### Resource Cleanup
 

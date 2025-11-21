@@ -207,6 +207,7 @@ Each scenario should follow this format:
 - **Page Isolation**: Each test gets its own `page` fixture - never share pages
 - **Factory Per Test**: Create `createStateFactory(page)` inside each test, not in `beforeAll`
 - **Executor Per Test**: Create `new ModelExecutor()` inside each test, not in `beforeAll`
+- **ModelExecutor Extension**: If extending ModelExecutor, do not override or access internal `actor`/`service` properties - use public API only
 - **Idempotent Operations**: Design event handlers to be idempotent when possible
 - **Auto-Waiting**: Use Playwright's auto-waiting instead of manual timeouts
 - **No Timing Dependencies**: Avoid `waitForTimeout()` - use element visibility checks instead

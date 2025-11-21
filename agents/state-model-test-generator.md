@@ -390,6 +390,50 @@ tests/
 - **No Timing Dependencies**: Avoid `waitForTimeout()` - use element visibility checks instead
 - **Parallel Execution**: All generated tests must pass with `--repeat-each 10 --workers 5`
 
+### Extending ModelExecutor (Advanced)
+
+If you need to extend `ModelExecutor` for custom functionality:
+
+- **DO**: Override public methods like `validateCurrentState()` or `dispatch()` if needed
+- **DO**: Add custom methods that use the public API (`currentStateValue`, `validateCurrentState()`, `dispatch()`)
+- **DO NOT**: Override or access internal `actor` or `service` properties
+- **DO NOT**: Try to access XState actor/service directly - the library manages this internally
+- **DO NOT**: Override `currentStateValue` getter unless absolutely necessary
+
+**Example - Correct Extension:**
+
+```typescript
+export class CustomModelExecutor extends ModelExecutor {
+  async validateCurrentState(): Promise<void> {
+    // Can override public methods
+    await super.validateCurrentState();
+    // Add custom validation
+  }
+
+  async customMethod() {
+    // Can use public API
+    const state = this.currentStateValue;
+    await this.validateCurrentState();
+  }
+}
+```
+
+**Example - Incorrect Extension:**
+
+```typescript
+export class CustomModelExecutor extends ModelExecutor {
+  // ❌ WRONG - Don't access internal actor
+  get actor() {
+    return super.actor;
+  } // Causes error!
+
+  // ❌ WRONG - Don't access internal service
+  get service() {
+    return super.service;
+  } // Not accessible!
+}
+```
+
 ## Generation Workflow
 
 ### Step-by-Step Process

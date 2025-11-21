@@ -230,6 +230,8 @@ test.describe("Navigation Model", () => {
 
 When the test fails, the healer agent:
 
+- Fixes ModelExecutor extension conflicts (e.g., actor property overrides)
+
 - Replays the failing steps
 - Inspects the current UI to locate equivalent elements or flows
 - Analyzes model-based testing specific issues (StateFactory, Page Objects, XState machines)
